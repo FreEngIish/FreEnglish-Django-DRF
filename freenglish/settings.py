@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from decouple import config
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ie0wdgeq1w^(s94iu!8mis(8_^san--hq(1c)lceaz2yxaqab3'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -52,13 +55,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ],
-}
+AUTHENTICATION_BACKENDS = [
+    'social_core.backends.auth0.Auth0OAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
-ROOT_URLCONF = 'freenglish.urls'
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+ROOT_URLCONF = 'userroom.urls'
 
 TEMPLATES = [
     {
@@ -124,9 +131,27 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'userroom.User'
+
+LOGOUT_REDIRECT_URL = 'http://localhost:8000/'
+AUTH0_CALLBACK_URL = 'http://localhost:8000/callback/'
+
+AUTH0_DOMAIN = config('APP_DOMAIN')
+API_IDENTIFIER = config('APP_AUDIENCE')
+PUBLIC_KEY = None
+JWT_ISSUER = f'https://{AUTH0_DOMAIN}/'
+JWT_AUDIENCE = API_IDENTIFIER
+
+SOCIAL_AUTH_AUTH0_KEY = config('APP_CLIENT_ID')
+SOCIAL_AUTH_AUTH0_SECRET = config('APP_CLIENT_SECRET')
