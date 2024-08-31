@@ -41,8 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'rest_framework',
     'userroom',
+    'social_django',
 ]
 
 MIDDLEWARE = [
@@ -65,7 +67,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
-ROOT_URLCONF = 'userroom.urls'
+ROOT_URLCONF = 'freenglish.urls'
 
 TEMPLATES = [
     {
@@ -145,7 +147,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'userroom.User'
 
 LOGOUT_REDIRECT_URL = 'http://localhost:8000/'
-AUTH0_CALLBACK_URL = 'http://localhost:8000/callback/'
+AUTH0_CALLBACK_URL = 'http://localhost:8000/api/callback/'
 
 AUTH0_DOMAIN = config('APP_DOMAIN')
 API_IDENTIFIER = config('APP_AUDIENCE')
@@ -155,3 +157,5 @@ JWT_AUDIENCE = API_IDENTIFIER
 
 SOCIAL_AUTH_AUTH0_KEY = config('APP_CLIENT_ID')
 SOCIAL_AUTH_AUTH0_SECRET = config('APP_CLIENT_SECRET')
+
+SITE_ID = 1
