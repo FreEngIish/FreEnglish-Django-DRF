@@ -1,0 +1,2 @@
+class RoomService:
+    pass

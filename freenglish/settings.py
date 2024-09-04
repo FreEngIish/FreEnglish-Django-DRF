@@ -108,8 +108,8 @@ DATABASES = {
 }
 
 LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
+    'version': 1,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}',
@@ -133,7 +133,7 @@ LOGGING = {
             'formatter': 'simple',
         },
     },
-    "loggers": {
+    'loggers': {
         'django': {
             'handlers': ['console'],
             'level': 'DEBUG',
