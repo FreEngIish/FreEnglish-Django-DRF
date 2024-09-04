@@ -3,7 +3,7 @@ from django.conf import settings
 from jose import jwt
 from jose.exceptions import JWTError
 
-from .models import User
+from ..userroom.models import User
 
 
 def get_jwk_key(token):

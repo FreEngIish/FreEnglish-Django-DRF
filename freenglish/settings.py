@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'userroom',
     'social_django',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -144,10 +145,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'userroom.User'
+AUTH_USER_MODEL = 'accounts.User'
 
 LOGOUT_REDIRECT_URL = 'http://localhost:8000/'
-AUTH0_CALLBACK_URL = 'http://localhost:8000/api/callback/'
+AUTH0_CALLBACK_URL = 'http://localhost:8000/accounts/callback/'
 
 AUTH0_DOMAIN = config('APP_DOMAIN')
 API_IDENTIFIER = config('APP_AUDIENCE')
