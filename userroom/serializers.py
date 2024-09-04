@@ -3,7 +3,7 @@ from rest_framework import serializers
 from userroom.models import UserRoom
 
 
-class RoomSerializer(serializers.ModelSerializer):
+class UserRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRoom
         fields = [
