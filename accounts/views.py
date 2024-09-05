@@ -22,6 +22,7 @@ def login_redirect(request):  # noqa: ARG001
     )
     return redirect(auth0_url)
 
+
 def auth0_callback(request):
     code = request.GET.get('code')
 
@@ -69,13 +70,16 @@ def auth0_callback(request):
     except Exception as e:
         return HttpResponseServerError(f'An unexpected error occurred: {str(e)}')
 
+
 def logout(request):
     # End the user's session in Django
     django_logout(request)
 
     # Create a response and redirect to Auth0 logout URL
     # Also remove the access_token from Cookies
-    response = redirect(f'https://{settings.AUTH0_DOMAIN}/v2/logout?client_id={settings.SOCIAL_AUTH_AUTH0_KEY}&returnTo={settings.LOGOUT_REDIRECT_URL}')
+    response = redirect(
+        f'https://{settings.AUTH0_DOMAIN}/v2/logout?client_id={settings.SOCIAL_AUTH_AUTH0_KEY}&returnTo={settings.LOGOUT_REDIRECT_URL}'
+    )
     response.delete_cookie('access_token')
 
     return response

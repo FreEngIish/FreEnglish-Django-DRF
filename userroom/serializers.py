@@ -13,5 +13,5 @@ class UserRoomSerializer(serializers.ModelSerializer):
             'language_level',
             'participant_limit',
             'current_participants',
-            'status'
+            'status',
         ]

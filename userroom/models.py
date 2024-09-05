@@ -35,6 +35,7 @@ class DefaultRoom(models.Model):
     def __str__(self):
         return self.room_name  # String representation of the room
 
+
 # Model for user-created rooms
 class UserRoom(models.Model):
     # Choices for room status
@@ -67,6 +68,7 @@ class UserRoom(models.Model):
     def __str__(self):
         return self.room_name  # String representation of the room
 
+
 # Model for room members (both default and user-created rooms)
 class RoomMembers(models.Model):
     room = models.ForeignKey(UserRoom, on_delete=models.CASCADE)  # Room to which the user belongs
@@ -74,6 +76,7 @@ class RoomMembers(models.Model):
 
     class Meta:
         unique_together = ('room', 'user')  # Ensures that each combination of room and user is unique
+
 
 # Model for messages in rooms
 class Message(models.Model):

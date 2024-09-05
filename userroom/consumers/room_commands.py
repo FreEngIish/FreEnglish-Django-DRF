@@ -7,12 +7,13 @@ from userroom.services.room_service import RoomService
 
 logger = logging.getLogger('freenglish')
 
+
 class RoomCommands:
     def __init__(self, consumer):
         self.consumer = consumer
         self.room_service = RoomService()
 
-    async def handle_create_room(self, data: dict[str, Any]):
+    async def handle_create_room(self, data: dict[str, Any], user):
         from userroom.serializers import UserRoomSerializer
 
         try:
@@ -20,7 +21,6 @@ class RoomCommands:
             native_language = data.get('native_language')
             language_level = data.get('language_level')
             participant_limit = data.get('participant_limit', 10)
-            user = self.consumer.scope['user']
 
             if not room_name or not native_language or not language_level:
                 await self.consumer.send(text_data=json.dumps({'type': 'error', 'message': 'Missing required fields'}))
@@ -40,7 +40,8 @@ class RoomCommands:
 
         except Exception as e:
             logger.error(f'An error occurred while creating a room: {e}', exc_info=True)
-            await self.consumer.send(text_data=json.dumps({
-                'type': 'error',
-                'message': 'An error occurred while creating the room. Please try again later.'
-            }))
+            await self.consumer.send(
+                text_data=json.dumps(
+                    {'type': 'error', 'message': 'An error occurred while creating the room. Please try again later.'}
+                )
+            )

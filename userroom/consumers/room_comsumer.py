@@ -10,6 +10,7 @@ from userroom.consumers.room_commands import RoomCommands
 
 logger = logging.getLogger('freenglish')
 
+
 class RoomConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +42,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 data = text_data_json.get('data', {})
 
                 if message_type == 'createRoom':
-                    await self.commands.handle_create_room(data)
+                    await self.commands.handle_create_room(data, user=self.user)
 
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
@@ -52,10 +53,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+
     @database_sync_to_async
     def get_user_from_token(self, token):
         from accounts.models import User
         from accounts.utils import decode_and_verify_token
+
         try:
             user_data = decode_and_verify_token(token)
             logger.debug(f'Decoded token data: {user_data}')

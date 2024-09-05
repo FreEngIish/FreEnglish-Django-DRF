@@ -20,14 +20,10 @@ class Auth0JWTBearerTokenValidator(JWTBearerTokenValidator):
 
         # Fetches the public keys from Auth0's JWKS endpoint
         jsonurl = urlopen(f'{issuer}.well-known/jwks.json')
-        public_key = JsonWebKey.import_key_set(
-            json.loads(jsonurl.read())
-        )
+        public_key = JsonWebKey.import_key_set(json.loads(jsonurl.read()))
 
         # Initializes the base JWTBearerTokenValidator with the public key
-        super(Auth0JWTBearerTokenValidator, self).__init__(
-            public_key
-        )
+        super(Auth0JWTBearerTokenValidator, self).__init__(public_key)
 
         # Configures the claims that are required and their expected values
         self.claims_options = {

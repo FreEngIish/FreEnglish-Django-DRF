@@ -1,33 +1,36 @@
 import pytest
 from channels.db import database_sync_to_async
-from channels.testing import WebsocketCommunicator
 
-from userroom.consumers.room_comsumer import RoomConsumer
 from userroom.models import UserRoom
+from userroom.tests.utils_test import create_test_oauth_token, setup_communicator
 
 
 @pytest.mark.django_db
 @pytest.mark.asyncio
 async def test_create_room():
     from accounts.models import User
+
     user = await database_sync_to_async(User.objects.create_user)(
-        email='testuser@example.com',
-        password='password123',
-        username='testuser',
+        email='testuser@example.com', password='password123', username='testuser', auth0_sub='auth0|test_unique_user1'
     )
-    communicator = WebsocketCommunicator(RoomConsumer.as_asgi(), '/ws/room/')
-    communicator.scope['user'] = user
-    connected, _ = await communicator.connect()
-    assert connected
-    await communicator.send_json_to({
-        'type': 'createRoom',
-        'data': {
-            'room_name': 'Test Room',
-            'native_language': 'English',
-            'language_level': 'Intermediate',
-            'participant_limit': 10
+    token = create_test_oauth_token(
+        user_id=user.id,
+        email=user.email,
+        username=user.username,
+        auth0_sub=user.auth0_sub,
+    )
+    communicator = await setup_communicator(user, token)
+    await communicator.send_json_to(
+        {
+            'type': 'createRoom',
+            'data': {
+                'room_name': 'Test Room',
+                'native_language': 'English',
+                'language_level': 'Intermediate',
+                'participant_limit': 10,
+            },
         }
-    })
+    )
     response = await communicator.receive_json_from()
     assert response['type'] == 'roomCreated'
     assert 'room' in response
