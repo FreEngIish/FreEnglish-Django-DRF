@@ -1,7 +1,9 @@
 import json
 import logging
 
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from jose import JWTError
 
 from userroom.consumers.room_commands import RoomCommands
 
@@ -15,9 +17,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.commands = RoomCommands(self)
 
     async def connect(self):
-        if self.scope['user'].is_authenticated:
-            await self.accept()
-        else:
+        try:
+            token = self.scope['query_string'].decode('utf8').split('=')[1]
+            self.user = await self.get_user_from_token(token)
+            if self.user:
+                await self.accept()
+            else:
+                await self.close(code=4001)  # Custom close code for unauthorized access
+        except (JWTError, IndexError, ValueError) as e:
+            logger.error(f'WebSocket connection error: {str(e)}')
             await self.close()
 
     async def disconnect(self, close_code):
@@ -44,3 +52,26 @@ class RoomConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        from accounts.models import User
+        from accounts.utils import decode_and_verify_token
+        try:
+            user_data = decode_and_verify_token(token)
+            logger.debug(f'Decoded token data: {user_data}')
+
+            # Use the 'sub' field to find the user. 'sub' give from auth0
+            user_id = user_data.get('sub')
+            if user_id:
+                # Assuming you have a method to find a user by 'sub'
+                user = User.objects.get(auth0_sub=user_id)  # Or another suitable method for lookup
+                return user
+            else:
+                logger.error('User ID not found in token data')
+                return None
+        except ValueError as e:
+            logger.error(f'Token validation error: {e}')
+            return None
+        except User.DoesNotExist:
+            logger.error('User does not exist')
+            return None
