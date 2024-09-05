@@ -6,6 +6,7 @@ from jose import jwt
 
 from freenglish import settings
 from userroom.consumers.room_comsumer import RoomConsumer
+from userroom.services.user_service import UserService
 
 
 def create_test_oauth_token(user_id, **kwargs):
@@ -23,7 +24,7 @@ def create_test_oauth_token(user_id, **kwargs):
 
 
 async def setup_communicator(user, token):
-    with patch.object(RoomConsumer, 'get_user_from_token', return_value=user):
+    with patch.object(UserService, 'get_user_from_token', return_value=user):
         communicator = WebsocketCommunicator(RoomConsumer.as_asgi(), f'/ws/rooms/?token={token}')
         connected, _ = await communicator.connect()
         assert connected

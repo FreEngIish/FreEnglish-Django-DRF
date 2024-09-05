@@ -1,11 +1,11 @@
 import json
 import logging
 
-from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from jose import JWTError
 
 from userroom.consumers.room_commands import RoomCommands
+from userroom.services.user_service import UserService
 
 
 logger = logging.getLogger('freenglish')
@@ -16,11 +16,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.user = None
         self.commands = RoomCommands(self)
+        self.user_service = UserService()
 
     async def connect(self):
         try:
             token = self.scope['query_string'].decode('utf8').split('=')[1]
-            self.user = await self.get_user_from_token(token)
+            self.user = await self.user_service.get_user_from_token(token)
             if self.user:
                 await self.accept()
             else:
@@ -53,28 +54,3 @@ class RoomConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
-
-    @database_sync_to_async
-    def get_user_from_token(self, token):
-        from accounts.models import User
-        from accounts.utils import decode_and_verify_token
-
-        try:
-            user_data = decode_and_verify_token(token)
-            logger.debug(f'Decoded token data: {user_data}')
-
-            # Use the 'sub' field to find the user. 'sub' give from auth0
-            user_id = user_data.get('sub')
-            if user_id:
-                # Assuming you have a method to find a user by 'sub'
-                user = User.objects.get(auth0_sub=user_id)  # Or another suitable method for lookup
-                return user
-            else:
-                logger.error('User ID not found in token data')
-                return None
-        except ValueError as e:
-            logger.error(f'Token validation error: {e}')
-            return None
-        except User.DoesNotExist:
-            logger.error('User does not exist')
-            return None
