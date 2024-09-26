@@ -4,6 +4,7 @@ from django.shortcuts import redirect
 from django.http import JsonResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+from django.views.decorators.csrf import csrf_exempt
 
 def login(request):
     google_auth_url = (
@@ -31,3 +32,15 @@ def callback(request):
         return JsonResponse({'email': email})
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.conf import settings
+
+@require_GET
+@csrf_exempt
+def protected_view(request):
+    if hasattr(request, 'user_email'):
+        # Здесь вы можете использовать email пользователя, чтобы выполнять действия, например:
+        return JsonResponse({'message': 'This is a protected view', 'email': request.user_email})
+    return JsonResponse({'error': 'Unauthorized'}, status=401)
