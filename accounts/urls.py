@@ -1,10 +1,9 @@
-from django.urls import path
+from django.urls import include, path
 
-from .views import auth0_callback, login_redirect, logout
+from . import views
 
 
 urlpatterns = [
-    path('login/', login_redirect, name='login_redirect'),
-    path('logout/', logout, name='logout'),
-    path('callback/', auth0_callback, name='auth0_callback'),
+    path('auth/', include('social_django.urls', namespace='social')),
+    path('login/google/', views.google_login, name='google_login'),
 ]

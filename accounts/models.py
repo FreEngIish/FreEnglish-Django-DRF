@@ -34,8 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):  # noqa: F811
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    # Field for save identificator user from Auth0
-    auth0_sub = models.CharField(max_length=255, unique=True)
+    google_sub = models.CharField(max_length=255)
 
     objects = UserManager()
 

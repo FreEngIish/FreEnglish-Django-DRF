@@ -56,12 +56,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
-AUTHENTICATION_BACKENDS = [
-    'social_core.backends.auth0.Auth0OAuth2',
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend',
-]
+)
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
@@ -147,16 +148,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-LOGOUT_REDIRECT_URL = 'http://localhost:8000/'
-AUTH0_CALLBACK_URL = 'http://localhost:8000/accounts/callback/'
+LOGIN_REDIRECT_URL = 'http://localhost:8000/auth/oauth/login-success'
+LOGOUT_REDIRECT_URL = 'http://localhost:8000/auth/oauth/login-success'
 
-AUTH0_DOMAIN = config('APP_DOMAIN')
-API_IDENTIFIER = config('APP_AUDIENCE')
-PUBLIC_KEY = None
-JWT_ISSUER = f'https://{AUTH0_DOMAIN}/'
-JWT_AUDIENCE = API_IDENTIFIER
-
-SOCIAL_AUTH_AUTH0_KEY = config('APP_CLIENT_ID')
-SOCIAL_AUTH_AUTH0_SECRET = config('APP_CLIENT_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
 SITE_ID = 1
