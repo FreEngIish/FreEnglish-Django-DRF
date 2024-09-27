@@ -1,10 +1,7 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import UserRoomViewSet
-
-router = DefaultRouter()
-router.register(r'rooms', UserRoomViewSet, basename='room')
+from django.urls import path
+from .views import UserRoomListCreateAPIView, UserRoomDetailAPIView
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('rooms/', UserRoomListCreateAPIView.as_view(), name='room-list-create'),
+    path('rooms/<int:pk>/', UserRoomDetailAPIView.as_view(), name='room-detail'),
 ]
