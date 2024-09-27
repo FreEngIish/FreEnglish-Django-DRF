@@ -2,6 +2,7 @@ import json
 
 import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +23,7 @@ def login(request):  # noqa: ARG001
         redirect_uri='http://localhost:8000/accounts/complete/google-oauth2/'
     )
     return redirect(google_auth_url)
+
 
 def callback(request):
     code = request.GET.get('code')  # Get the authorization code
@@ -54,13 +56,31 @@ def callback(request):
     )
 
     user_info = user_info_response.json()
+    email = user_info.get('email')
 
-    # Return email, access_token, and refresh_token
+    # Save user to the database
+    User = get_user_model()
+    user, created = User.objects.get_or_create(
+        email=email,
+        defaults={
+            'username': email.split('@')[0],  # Set username from email
+            'first_name': user_info.get('given_name', ''),
+            'last_name': user_info.get('family_name', ''),
+        }
+    )
+
+    if created:
+        # User was created
+        user.set_unusable_password()  # Set unusable password for users who logged in via OAuth
+        user.save()
+
+    # Return user data
     return JsonResponse({
-        'email': user_info.get('email'),
+        'email': email,
         'access_token': access_token,
         'refresh_token': refresh_token
     })
+
 
 @require_POST
 def refresh_access_token_view(request):
