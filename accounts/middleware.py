@@ -1,7 +1,6 @@
-import json
 import requests
 from django.http import JsonResponse
-from django.conf import settings
+
 
 class GoogleAuthMiddleware:
     def __init__(self, get_response):
@@ -10,21 +9,19 @@ class GoogleAuthMiddleware:
     def __call__(self, request):
         token = request.META.get('HTTP_AUTHORIZATION')
         if token:
-            token = token.split(' ')[1]  # Предполагается, что токен передается как "Bearer <token>"
+            token = token.split(' ')[1]  # It is assumed that the token is passed as "Bearer <token>"
             try:
-                # Запрос к Google API для проверки access token
+                # Request to Google API to verify the access token
                 response = requests.get(f'https://oauth2.googleapis.com/tokeninfo?access_token={token}')
                 idinfo = response.json()
 
                 if 'error' in idinfo:
-                    print(f"Token validation error: {idinfo['error']}")  # Выводим ошибку для отладки
                     return JsonResponse({'error': 'Invalid token'}, status=401)
 
-                # Проверяем, что токен действителен и получаем email
-                request.user_email = idinfo['email']  # Сохранение email в запросе для дальнейшего использования
+                # Check that the token is valid and get the email
+                request.user_email = idinfo['email']  # Save email in the request for later use
 
-            except Exception as e:
-                print(f"Token validation error: {e}")  # Выводим ошибку для отладки
+            except Exception:
                 return JsonResponse({'error': 'Invalid token'}, status=401)
 
         response = self.get_response(request)
