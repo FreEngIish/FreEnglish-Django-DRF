@@ -6,6 +6,9 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+import json
 
 def login(request):
     google_auth_url = (
@@ -61,10 +64,7 @@ def callback(request):
         'refresh_token': refresh_token
     })
 
-import json  # Импортируйте json
-
 @require_POST
-@csrf_exempt
 def refresh_access_token_view(request):
     try:
         body = json.loads(request.body)  # Загружаем тело запроса
@@ -97,8 +97,12 @@ def refresh_access_token(refresh_token):
     return response.json()
 
 @require_GET
-@csrf_exempt
 def protected_view(request):
     if hasattr(request, 'user_email'):
         return JsonResponse({'message': 'This is a protected view', 'email': request.user_email})
     return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+#View for test endopoints with csrf token. This is temporary because we don't have a swagger
+@csrf_exempt
+def get_csrf_token(request):
+    return JsonResponse({'csrf_token': request.META.get('CSRF_COOKIE')})
