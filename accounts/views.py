@@ -12,24 +12,46 @@ from .services import UserService
 
 user_service = UserService()
 
-
 def login(request):  # noqa: ARG001
+    """
+    Initiates the OAuth 2.0 login process by redirecting the user to the Google
+    authentication URL. The URL includes necessary parameters for obtaining
+    authorization, including client ID and redirect URI.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        HttpResponseRedirect: Redirects the user to the Google OAuth 2.0 login page.
+    """
     google_auth_url = (
         'https://accounts.google.com/o/oauth2/v2/auth'
         '?response_type=code'
         '&client_id={client_id}'
         '&redirect_uri={redirect_uri}'
         '&scope=email%20openid%20profile'
-        '&access_type=offline'  # This is important for obtaining a refresh token
-        '&prompt=consent'       # This is important for re-requesting the refresh token
+        '&access_type=offline'  # Important for obtaining a refresh token
+        '&prompt=consent'       # Important for re-requesting the refresh token
     ).format(
         client_id=settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
         redirect_uri='http://localhost:8000/accounts/complete/google-oauth2/'
     )
     return redirect(google_auth_url)
 
-
 def callback(request):
+    """
+    Handles the callback from Google's OAuth 2.0 server after the user
+    has authenticated. It exchanges the authorization code for access and
+    refresh tokens, retrieves user information, and either creates a new
+    user or retrieves an existing one.
+
+    Args:
+        request: The HTTP request object containing the authorization code.
+
+    Returns:
+        JsonResponse: Contains user information, access token, and refresh token
+        or an error message if the process fails.
+    """
     code = request.GET.get('code')  # Get the authorization code
     if not code:
         return JsonResponse({'error': 'Authorization code is missing'}, status=400)
@@ -78,9 +100,20 @@ def callback(request):
         'refresh_token': refresh_token
     })
 
-
 @require_POST
 def refresh_access_token_view(request):
+    """
+    Endpoint to refresh the access token using the provided refresh token.
+    It parses the incoming request, verifies the refresh token, and returns
+    a new access token and its expiration time.
+
+    Args:
+        request: The HTTP request object containing the refresh token in JSON format.
+
+    Returns:
+        JsonResponse: Contains the new access token and its expiration time or an
+        error message if the refresh token is invalid or missing.
+    """
     try:
         body = json.loads(request.body)  # Load the request body
     except json.JSONDecodeError:
@@ -100,6 +133,16 @@ def refresh_access_token_view(request):
     })
 
 def refresh_access_token(refresh_token):
+    """
+    Requests a new access token using the provided refresh token.
+
+    Args:
+        refresh_token (str): The refresh token to exchange for a new access token.
+
+    Returns:
+        dict: The response containing the new access token and its expiration
+        time or an error message.
+    """
     response = requests.post(
         'https://oauth2.googleapis.com/token',
         data={
@@ -111,14 +154,33 @@ def refresh_access_token(refresh_token):
     )
     return response.json()
 
-# View for test access token validation. This is temporary.
 @require_GET
 def protected_view(request):
+    """
+    A protected view that requires authentication. It checks if the user is
+    authenticated and returns a success message along with the user's email.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        JsonResponse: Contains a success message and user email if authenticated,
+        or an error message if unauthorized.
+    """
     if hasattr(request, 'user_email'):
         return JsonResponse({'message': 'This is a protected view', 'email': request.user_email})
     return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-# View for test endpoints with CSRF token. This is temporary because we don't have a swagger
 @csrf_exempt
 def get_csrf_token(request):
+    """
+    Provides a CSRF token for AJAX requests. This is a temporary endpoint
+    for testing purposes.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        JsonResponse: Contains the CSRF token for the client to use.
+    """
     return JsonResponse({'csrf_token': request.META.get('CSRF_COOKIE')})
