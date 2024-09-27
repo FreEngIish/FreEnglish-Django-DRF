@@ -1,7 +1,8 @@
 import logging
-import requests
 
+import requests
 from channels.db import database_sync_to_async
+
 
 logger = logging.getLogger('freenglish')
 
@@ -14,7 +15,7 @@ class UserService:
 
             if response.status_code == 200:
                 user_info = response.json()
-                
+
                 user_email = user_info.get('email')
                 if user_email:
                     user = User.objects.get(email=user_email)
