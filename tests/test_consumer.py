@@ -92,11 +92,11 @@ async def test_update_room():
         {
             'type': 'editRoom',
             'data': {
-                "room_id": room_id,
-                "room_name": "Updated Room",
-                "native_language": "English",
-                "language_level": "Intermediate",
-                "participant_limit": 7
+                'room_id': room_id,
+                'room_name': 'Updated Room',
+                'native_language': 'English',
+                'language_level': 'Intermediate',
+                'participant_limit': 7
             },
         }
     )
@@ -114,7 +114,7 @@ async def test_update_room():
 @pytest.mark.asyncio
 async def test_join_room():
     User = get_user_model()
-    
+
     user = await database_sync_to_async(User.objects.create_user)(
         email='userforcreateroom1@example.com',
         password='password123',
@@ -124,9 +124,9 @@ async def test_join_room():
 
     room_service = RoomService()
     room = await room_service.create_room(
-        room_name="For Edit",
-        native_language="English",
-        language_level="Intermediate",
+        room_name='For Edit',
+        native_language='English',
+        language_level='Intermediate',
         participant_limit=10,
         creator=user
     )
@@ -184,13 +184,13 @@ async def test_leave_room():
 
     room_service = RoomService()
     room = await room_service.create_room(
-        room_name="For Edit",
-        native_language="English",
-        language_level="Intermediate",
+        room_name='For Edit',
+        native_language='English',
+        language_level='Intermediate',
         participant_limit=10,
         creator=user
     )
-    
+
     user = await database_sync_to_async(User.objects.create_user)(
         email='userforleavingroom@example.com',
         password='password123',
