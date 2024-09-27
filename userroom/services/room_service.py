@@ -23,6 +23,19 @@ class RoomService:
         return room
 
     @database_sync_to_async
+    def update_room(self, room, room_name=None, native_language=None, language_level=None, participant_limit=None):
+        if room_name is not None:
+            room.room_name = room_name
+        if native_language is not None:
+            room.native_language = native_language
+        if language_level is not None:
+            room.language_level = language_level
+        if participant_limit is not None:
+            room.participant_limit = participant_limit
+        room.save()
+        return room
+
+    @database_sync_to_async
     def get_room(self, room_id):
         from userroom.models import UserRoom
         return UserRoom.objects.filter(room_id=room_id).first()
