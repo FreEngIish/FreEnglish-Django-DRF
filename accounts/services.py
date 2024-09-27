@@ -1,5 +1,6 @@
-from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+
 
 User = get_user_model()
 
@@ -14,10 +15,10 @@ class UserService:
                 'last_name': user_info.get('family_name', ''),
             }
         )
-        
+
         if not created:
             # Если пользователь уже существует, обновляем last_login
             user.last_login = timezone.now()
             user.save()
-        
+
         return user, created
