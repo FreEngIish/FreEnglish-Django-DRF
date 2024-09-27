@@ -8,6 +8,10 @@ from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from .services import UserService
+
+
+user_service = UserService()
 
 
 def login(request):  # noqa: ARG001
@@ -58,30 +62,16 @@ def callback(request):
 
     user_info = user_info_response.json()
     email = user_info.get('email')
-    google_sub = user_info.get('id')  # Extracting google_sub
+    google_sub = user_info.get('id')  # Take google_sub
 
-    # Saving the user in the database
-    User = get_user_model()
-    user, created = User.objects.get_or_create(
-        google_sub=google_sub,  # Using google_sub to find the user
-        defaults={
-            'email': email,
-            'username': email.split('@')[0],  # Set username based on email
-            'first_name': user_info.get('given_name', ''),
-            'last_name': user_info.get('family_name', ''),
-        }
-    )
+    # Save user to the database through the service
+    user, created = user_service.get_or_create_user(google_sub, email, user_info)
 
     if created:
-        # User was created
-        user.set_unusable_password()  # Set unusable password for users who logged in via OAuth
-    else:
-        # User already exists, update last_login
-        user.last_login = timezone.now()  # Set current time as last_login
+        user.set_unusable_password()   # Set unusable password for users
+        user.save()
 
-    user.save()
-
-    # Returning user data
+    # Return user data
     return JsonResponse({
         'email': email,
         'google_sub': google_sub,
