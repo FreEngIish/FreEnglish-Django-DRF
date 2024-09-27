@@ -23,7 +23,7 @@ class DefaultRoom(models.Model):
     native_language = models.CharField(max_length=10)
     language_level = models.CharField(max_length=12, choices=LANGUAGE_LEVEL_CHOICES, default='Beginner')
     participant_limit = models.IntegerField(default=10)
-    current_participants = models.IntegerField(default=0)
+    current_participants = models.ManyToManyField('accounts.User', related_name='user_rooms', blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated_date = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10, choices=ROOM_STATUS_CHOICES, default='Active')
