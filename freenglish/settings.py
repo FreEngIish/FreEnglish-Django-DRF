@@ -149,8 +149,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-LOGIN_REDIRECT_URL = 'http://localhost:8000/auth/oauth/login-success'
-LOGOUT_REDIRECT_URL = 'http://localhost:8000/auth/oauth/login-success'
+LOGIN_REDIRECT_URL = 'http://localhost:8000/accounts/complete/google-oauth2/'
+LOGOUT_REDIRECT_URL = 'http://localhost:8000/accounts/complete/google-oauth2/'
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')

@@ -15,7 +15,7 @@ def login(request):
         "&scope=email"
     ).format(
         client_id=settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
-        redirect_uri="http://localhost:8000/accounts/auth/complete/google-oauth2/"
+        redirect_uri="http://localhost:8000/accounts/complete/google-oauth2/"
     )
     return redirect(google_auth_url)
 
