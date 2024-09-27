@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 def login(request):
     google_auth_url = (
@@ -57,8 +57,31 @@ def callback(request):
     # Возвращаем email, access_token и refresh_token
     return JsonResponse({
         'email': user_info.get('email'), 
-        'access_token': access_token,  # Добавлено
+        'access_token': access_token,  
         'refresh_token': refresh_token
+    })
+
+import json  # Импортируйте json
+
+@require_POST
+@csrf_exempt
+def refresh_access_token_view(request):
+    try:
+        body = json.loads(request.body)  # Загружаем тело запроса
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    refresh_token = body.get('refresh_token')  # Получаем refresh_token
+    if not refresh_token:
+        return JsonResponse({'error': 'Refresh token is missing'}, status=400)
+
+    response = refresh_access_token(refresh_token)
+    if 'error' in response:
+        return JsonResponse({'error': response['error']}, status=400)
+
+    return JsonResponse({
+        'access_token': response.get('access_token'),
+        'expires_in': response.get('expires_in')
     })
 
 def refresh_access_token(refresh_token):
