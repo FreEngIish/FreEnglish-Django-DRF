@@ -10,14 +10,14 @@ class UserService:
             google_sub=google_sub,
             defaults={
                 'email': email,
-                'username': email.split('@')[0],  # Установите username по email
+                'username': email.split('@')[0],  # Set username by email
                 'first_name': user_info.get('given_name', ''),
                 'last_name': user_info.get('family_name', ''),
             }
         )
 
         if not created:
-            # Если пользователь уже существует, обновляем last_login
+            # If the user already exists, update last_login
             user.last_login = timezone.now()
             user.save()
 
