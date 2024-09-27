@@ -57,26 +57,29 @@ def callback(request):
 
     user_info = user_info_response.json()
     email = user_info.get('email')
+    google_sub = user_info.get('id')  # Извлекаем google_sub
 
-    # Save user to the database
+    # Сохранение пользователя в базе данных
     User = get_user_model()
     user, created = User.objects.get_or_create(
-        email=email,
+        google_sub=google_sub,  # Используем google_sub для поиска пользователя
         defaults={
-            'username': email.split('@')[0],  # Set username from email
+            'email': email,
+            'username': email.split('@')[0],  # Установите username по email
             'first_name': user_info.get('given_name', ''),
             'last_name': user_info.get('family_name', ''),
         }
     )
 
     if created:
-        # User was created
-        user.set_unusable_password()  # Set unusable password for users who logged in via OAuth
+        # Пользователь был создан
+        user.set_unusable_password()  # Устанавливаем unusable password для пользователей, которые вошли через OAuth
         user.save()
 
-    # Return user data
+    # Возвращаем данные пользователя
     return JsonResponse({
         'email': email,
+        'google_sub': google_sub,  # Возвращаем google_sub
         'access_token': access_token,
         'refresh_token': refresh_token
     })
