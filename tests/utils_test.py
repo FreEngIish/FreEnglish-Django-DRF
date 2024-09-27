@@ -1,12 +1,12 @@
-import json
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
-from channels.testing import WebsocketCommunicator
+
 import jwt
+from channels.testing import WebsocketCommunicator
+from django.conf import settings
+
 from userroom.consumers.room_comsumer import RoomConsumer
 from userroom.services.user_service import UserService
-from django.conf import settings
-import requests
 
 
 def create_test_google_token(user_id, email):
@@ -20,7 +20,7 @@ def create_test_google_token(user_id, email):
         'exp': datetime.now(timezone.utc) + timedelta(hours=1),
         'iat': datetime.now(timezone.utc),
     }
-    
+
     # Here, we are simulating a token generation. In reality, you might want to
     # integrate with a service or generate a JWT as per your needs.
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')

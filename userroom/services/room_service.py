@@ -66,5 +66,5 @@ class RoomService:
 
     async def serialize_room_data(self, room):
             from userroom.serializers import UserRoomSerializer
-            
+
             return await database_sync_to_async(lambda: UserRoomSerializer(room).data)()

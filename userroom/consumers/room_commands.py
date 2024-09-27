@@ -2,8 +2,10 @@ import json
 import logging
 from typing import Any
 
-from userroom.services.room_service import RoomService
 from channels.db import database_sync_to_async
+
+from userroom.services.room_service import RoomService
+
 
 logger = logging.getLogger('freenglish')
 
@@ -119,7 +121,7 @@ class RoomCommands:
                     language_level = data.get('language_level')
                     participant_limit = data.get('participant_limit')
 
-                    updated_room = await self.room_service.update_room(
+                    await self.room_service.update_room(
                         room,
                         room_name=room_name,
                         native_language=native_language,
