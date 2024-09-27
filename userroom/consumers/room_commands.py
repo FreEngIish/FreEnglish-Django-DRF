@@ -5,7 +5,6 @@ from typing import Any
 from userroom.services.room_service import RoomService
 from channels.db import database_sync_to_async
 
-
 logger = logging.getLogger('freenglish')
 
 class RoomCommands:
@@ -33,7 +32,7 @@ class RoomCommands:
                 creator=user,
             )
 
-            room_data = await self.serialize_room_data(room)
+            room_data = await self.room_service.serialize_room_data(room)
             await self.consumer.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
 
         except Exception as e:
@@ -108,11 +107,6 @@ class RoomCommands:
                 'type': 'error',
                 'message': 'Could not leave room.'
             }))
-
-    async def serialize_room_data(self, room):
-            from userroom.serializers import UserRoomSerializer
-            
-            return await database_sync_to_async(lambda: UserRoomSerializer(room).data)()
 
     async def handle_edit_room(self, room_id, user, data):
         try:
