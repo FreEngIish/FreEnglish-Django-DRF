@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 from userroom.services.room_service import RoomService
+from channels.db import database_sync_to_async
 
 
 logger = logging.getLogger('freenglish')
@@ -107,3 +108,8 @@ class RoomCommands:
                 'type': 'error',
                 'message': 'Could not leave room.'
             }))
+    async def serialize_room_data(self, room):
+            from userroom.serializers import UserRoomSerializer
+            
+            # Используем database_sync_to_async для сериализации
+            return await database_sync_to_async(lambda: UserRoomSerializer(room).data)()
