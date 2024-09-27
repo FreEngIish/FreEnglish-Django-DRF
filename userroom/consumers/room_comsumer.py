@@ -44,7 +44,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
                 if message_type == 'createRoom':
                     await self.commands.handle_create_room(data, user=self.user)
-
+                elif message_type == 'joinRoom':
+                    room_id = data.get('room_id')
+                    await self.commands.handle_join_room(room_id, user=self.user)
+                elif message_type == 'leaveRoom':
+                    room_id = data.get('room_id')
+                    await self.commands.handle_leave_room(room_id, user=self.user)
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 

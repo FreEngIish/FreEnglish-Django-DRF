@@ -69,6 +69,8 @@ class RoomMembers(models.Model):
     class Meta:
         unique_together = ('room', 'user')
 
+    def __str__(self):
+        return f'{self.user.email} in {self.room.room_name}'
 
 class Message(models.Model):
     message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
