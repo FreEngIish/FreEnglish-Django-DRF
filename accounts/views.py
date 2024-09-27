@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import redirect
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -57,29 +58,33 @@ def callback(request):
 
     user_info = user_info_response.json()
     email = user_info.get('email')
-    google_sub = user_info.get('id')  # Извлекаем google_sub
+    google_sub = user_info.get('id')  # Extracting google_sub
 
-    # Сохранение пользователя в базе данных
+    # Saving the user in the database
     User = get_user_model()
     user, created = User.objects.get_or_create(
-        google_sub=google_sub,  # Используем google_sub для поиска пользователя
+        google_sub=google_sub,  # Using google_sub to find the user
         defaults={
             'email': email,
-            'username': email.split('@')[0],  # Установите username по email
+            'username': email.split('@')[0],  # Set username based on email
             'first_name': user_info.get('given_name', ''),
             'last_name': user_info.get('family_name', ''),
         }
     )
 
     if created:
-        # Пользователь был создан
-        user.set_unusable_password()  # Устанавливаем unusable password для пользователей, которые вошли через OAuth
-        user.save()
+        # User was created
+        user.set_unusable_password()  # Set unusable password for users who logged in via OAuth
+    else:
+        # User already exists, update last_login
+        user.last_login = timezone.now()  # Set current time as last_login
 
-    # Возвращаем данные пользователя
+    user.save()
+
+    # Returning user data
     return JsonResponse({
         'email': email,
-        'google_sub': google_sub,  # Возвращаем google_sub
+        'google_sub': google_sub,
         'access_token': access_token,
         'refresh_token': refresh_token
     })
@@ -117,6 +122,7 @@ def refresh_access_token(refresh_token):
     )
     return response.json()
 
+# View for test access token validation. This is temporary.
 @require_GET
 def protected_view(request):
     if hasattr(request, 'user_email'):
