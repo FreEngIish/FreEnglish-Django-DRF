@@ -25,7 +25,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
             if self.user:
                 await self.accept()
             else:
-                await self.close(code=4001)  # Custom close code for unauthorized access
+                await self.close(code=4001)
         except (JWTError, IndexError, ValueError) as e:
             logger.error(f'WebSocket connection error: {str(e)}')
             await self.close()
@@ -50,6 +50,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 elif message_type == 'leaveRoom':
                     room_id = data.get('room_id')
                     await self.commands.handle_leave_room(room_id, user=self.user)
+                elif message_type == 'editRoom':
+                    room_id = data.get('room_id')
+                    await self.commands.handle_edit_room(room_id, user=self.user, data=data)
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 

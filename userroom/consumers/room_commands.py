@@ -2,6 +2,8 @@ import json
 import logging
 from typing import Any
 
+from channels.db import database_sync_to_async
+
 from userroom.services.room_service import RoomService
 
 
@@ -32,7 +34,7 @@ class RoomCommands:
                 creator=user,
             )
 
-            room_data = await self.serialize_room_data(room)
+            room_data = await self.room_service.serialize_room_data(room)
             await self.consumer.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
 
         except Exception as e:
@@ -106,4 +108,45 @@ class RoomCommands:
             await self.consumer.send(text_data=json.dumps({
                 'type': 'error',
                 'message': 'Could not leave room.'
+            }))
+
+    async def handle_edit_room(self, room_id, user, data):
+        try:
+            room = await self.room_service.get_room(room_id)
+            if room:
+                creator = await database_sync_to_async(lambda: room.creator)()
+                if creator.id == user.id:
+                    room_name = data.get('room_name')
+                    native_language = data.get('native_language')
+                    language_level = data.get('language_level')
+                    participant_limit = data.get('participant_limit')
+
+                    await self.room_service.update_room(
+                        room,
+                        room_name=room_name,
+                        native_language=native_language,
+                        language_level=language_level,
+                        participant_limit=participant_limit
+                    )
+
+                    await self.consumer.send(text_data=json.dumps({
+                        'type': 'success',
+                        'message': 'Room updated successfully.'
+                    }))
+                    logger.info(f'Room {room.room_name} updated by {user.email}')
+                else:
+                    await self.consumer.send(text_data=json.dumps({
+                        'type': 'error',
+                        'message': 'You do not have permission to edit this room.'
+                    }))
+            else:
+                await self.consumer.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Room does not exist.'
+                }))
+        except Exception as e:
+            logger.error(f'An error occurred while editing the room: {e}', exc_info=True)
+            await self.consumer.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Could not edit room.'
             }))
