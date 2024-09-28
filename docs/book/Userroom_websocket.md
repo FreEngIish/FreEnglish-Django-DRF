@@ -60,7 +60,9 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 ```json
 {
   "type": "joinRoom",
-  "room_id": 1
+  "data": {
+    "room_id": "47eb28c571ed40dea4b59b3e422f1bb2"
+  }
 }
 ```
 
@@ -75,7 +77,9 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 ```json
 {
   "type": "leaveRoom",
-  "room_id": 1
+  "data": {
+    "room_id": "47eb28c571ed40dea4b59b3e422f1bb2"
+  }
 }
 ```
 ## Method: `handle_edit_room`
@@ -90,12 +94,12 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 ```json
 {
   "type": "editRoom",
-  "room_id": 1,
+  "room_id": "47eb28c571ed40dea4b59b3e422f1bb2",
   "data": {
     "room_name": "Advanced English",
     "native_language": "English",
     "language_level": "Advanced",
-    "participant_limit": 15
+    "participant_limit": 5
   }
 }
 ```
