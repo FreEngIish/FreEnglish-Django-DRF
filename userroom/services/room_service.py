@@ -8,7 +8,7 @@ logger = logging.getLogger('freenglish')
 class RoomService:
     @database_sync_to_async
     def create_room(self, room_name, native_language, language_level, participant_limit, creator):
-        from userroom.models import RoomMembers, UserRoom
+        from userroom.models import UserRoom
 
         room = UserRoom(
             room_name=room_name,
@@ -18,8 +18,6 @@ class RoomService:
             creator=creator,
         )
         room.save()
-        room.current_participants.add(creator)
-        RoomMembers.objects.create(room=room, user=creator)
         return room
 
     @database_sync_to_async
