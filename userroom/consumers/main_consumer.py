@@ -3,6 +3,7 @@ import logging
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from userroom.consumers.main_commands import MainCommands
 from userroom.services.room_service import RoomService
 from userroom.services.user_service import UserService
 
@@ -12,52 +13,42 @@ logger = logging.getLogger('freenglish')
 class MainConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user = None
+        self.commands = MainCommands(self)
         self.user_service = UserService()
         self.room_service = RoomService()
-        self.user = None
+        self.room_id = None
 
     async def connect(self):
         await self.accept()
 
-    async def disconnect(self, close_code):
-        pass
+    async def disconnect(self, close_code):  # noqa: ARG002
+        if self.user and self.room_id:
+            await self.commands.handle_leave_room(self.room_id, self.user)
 
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message_type = text_data_json.get('type')
-        data = text_data_json.get('data', {})
+    async def receive(self, text_data=None, bytes_data=None):  # noqa: ARG002
+        if text_data is not None:
+            try:
+                text_data_json = json.loads(text_data)
 
-        if message_type == 'createRoom':
-            token = text_data_json.get('token')
-            if token:
-                self.user = await self.user_service.get_user_from_token(token)
-                if not self.user:
-                    await self.send(text_data=json.dumps({'type': 'error', 'message': 'Invalid token.'}))
-                    return
-            await self.handle_create_room(data)
+                token = text_data_json.get('token')
+                if token:
+                    self.user = await self.user_service.get_user_from_token(token)
+                    if not self.user:
+                        await self.send(text_data=json.dumps({'type': 'error', 'message': 'Invalid token.'}))
+                        return
 
-    async def handle_create_room(self, data):
-        try:
-            room_name = data.get('room_name')
-            native_language = data.get('native_language')
-            language_level = data.get('language_level', 'Beginner')
-            participant_limit = data.get('participant_limit', 10)
+                message_type = text_data_json.get('type')
+                data = text_data_json.get('data', {})
 
-            if not room_name or not native_language or not language_level:
-                await self.send(text_data=json.dumps({'type': 'error', 'message': 'Missing required fields'}))
-                return
+                if message_type == 'createRoom':
+                    await self.commands.handle_create_room(data, user=self.user)
+                else:
+                    await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 
-            room = await self.room_service.create_room(
-                room_name=room_name,
-                native_language=native_language,
-                language_level=language_level,
-                participant_limit=participant_limit,
-                creator=self.user,
-            )
-
-            room_data = await self.room_service.serialize_room_data(room)
-            await self.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
-
-        except Exception as e:
-            logger.error(f'Error creating room: {e}')
-            await self.send(text_data=json.dumps({'type': 'error', 'message': 'An error occurred while creating the room.'}))  # noqa: E501
+            except json.JSONDecodeError:
+                logger.error('Invalid JSON received: %s', text_data)
+                await self.send(text_data=json.dumps({'type': 'error', 'message': 'Invalid JSON'}))
+            except Exception as e:
+                logger.error('Error processing message: %s', str(e))
+                await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
