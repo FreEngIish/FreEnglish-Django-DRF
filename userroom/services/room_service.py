@@ -66,3 +66,9 @@ class RoomService:
             from userroom.serializers import UserRoomSerializer
 
             return await database_sync_to_async(lambda: UserRoomSerializer(room).data)()
+
+    @database_sync_to_async
+    def get_user_room(self, user):
+        from userroom.models import RoomMembers
+        room_member = RoomMembers.objects.filter(user=user).first()
+        return room_member.room if room_member else None
