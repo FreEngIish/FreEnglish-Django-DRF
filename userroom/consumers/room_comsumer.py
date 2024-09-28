@@ -4,7 +4,7 @@ import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from userroom.consumers.room_commands import RoomCommands
-from userroom.services.room_service import RoomService  # Импортируем RoomService
+from userroom.services.room_service import RoomService
 from userroom.services.user_service import UserService
 
 
@@ -16,19 +16,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.user = None
         self.commands = RoomCommands(self)
         self.user_service = UserService()
-        self.room_service = RoomService()  # Создаем экземпляр RoomService для проверки комнат
-        self.room_id = None  # Инициализация room_id
+        self.room_service = RoomService()
+        self.room_id = None
 
     async def connect(self):
-        # Извлекаем room_id из URL маршрута
         self.room_id = self.scope['url_route']['kwargs'].get('room_id')
 
-        # Проверяем, существует ли комната в базе данных
         if await self.room_exists(self.room_id):
-            # Если комната существует, принимаем соединение
             await self.accept()
         else:
-            # Если комната не существует, разрываем соединение
             await self.close()
             logger.warning(f'Tried to connect to non-existent room {self.room_id}')
 
@@ -43,7 +39,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
             try:
                 text_data_json = json.loads(text_data)
 
-                # Извлекаем токен из данных
                 token = text_data_json.get('token')
                 if token:
                     self.user = await self.user_service.get_user_from_token(token)
@@ -57,21 +52,17 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 if message_type == 'createRoom':
                     await self.commands.handle_create_room(data, user=self.user)
                 elif message_type == 'joinRoom':
-                    room_id = data.get('room_id')
-                    if await self.room_exists(room_id):  # Проверка существования комнаты
-                        await self.commands.handle_join_room(room_id, user=self.user)
-                        self.room_id = room_id  # Сохраняем room_id
+                    if await self.room_exists(self.room_id):
+                        await self.commands.handle_join_room(self.room_id, user=self.user)
                     else:
                         await self.send(text_data=json.dumps({
                             'type': 'error',
                             'message': 'Room does not exist.'
                         }))
                 elif message_type == 'leaveRoom':
-                    room_id = data.get('room_id')
-                    await self.commands.handle_leave_room(room_id, user=self.user)
+                    await self.commands.handle_leave_room(self.room_id, user=self.user)
                 elif message_type == 'editRoom':
-                    room_id = data.get('room_id')
-                    await self.commands.handle_edit_room(room_id, user=self.user, data=data)
+                    await self.commands.handle_edit_room(self.room_id, user=self.user, data=data)
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 
