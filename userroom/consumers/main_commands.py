@@ -33,6 +33,16 @@ class MainCommands:
 
             room_data = await self.room_service.serialize_room_data(room)
             self.consumer.room_id = room_data['room_id']
+
+            # Отправка информации о новой комнате всем подключенным клиентам
+            await self.consumer.channel_layer.group_send(
+                'rooms_group',  # Название группы для всех комнат
+                {
+                    'type': 'room_created',  # Тип события
+                    'room': room_data,
+                }
+            )
+
             await self.consumer.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
 
         except Exception as e:

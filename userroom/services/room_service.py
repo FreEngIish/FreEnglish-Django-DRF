@@ -72,3 +72,8 @@ class RoomService:
         from userroom.models import RoomMembers
         room_member = RoomMembers.objects.filter(user=user).first()
         return room_member.room if room_member else None
+
+    @database_sync_to_async
+    def get_all_rooms(self):
+        from userroom.models import UserRoom
+        return UserRoom.objects.all()

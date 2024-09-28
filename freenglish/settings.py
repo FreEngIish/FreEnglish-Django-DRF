@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'userroom',
     'social_django',
     'accounts',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -84,6 +85,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'freenglish.wsgi.application'
 
+ASGI_APPLICATION = 'freenglish.asgi.application'
 
 DATABASES = {
     'default': {
@@ -151,4 +153,13 @@ CACHES = {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
 }

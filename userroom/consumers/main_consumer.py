@@ -21,16 +21,17 @@ class MainConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         await self.accept()
+        await self.channel_layer.group_add('rooms_group', self.channel_name)
 
     async def disconnect(self, close_code):  # noqa: ARG002
         if self.user and self.room_id:
             await self.commands.handle_leave_room(self.room_id, self.user)
+        await self.channel_layer.group_discard('rooms_group', self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):  # noqa: ARG002
         if text_data is not None:
             try:
                 text_data_json = json.loads(text_data)
-
                 token = text_data_json.get('token')
                 if token:
                     self.user = await self.user_service.get_user_from_token(token)
@@ -43,6 +44,8 @@ class MainConsumer(AsyncWebsocketConsumer):
 
                 if message_type == 'createRoom':
                     await self.commands.handle_create_room(data, user=self.user)
+                elif message_type == 'getAllRooms':
+                    await self.handle_get_all_rooms()  # Получить все комнаты
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 
@@ -52,3 +55,16 @@ class MainConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+
+    async def room_created(self, event):
+        room_data = event['room']
+        await self.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
+
+    async def handle_get_all_rooms(self):
+        try:
+            rooms = await self.room_service.get_all_rooms()
+            rooms_data = [await self.room_service.serialize_room_data(room) for room in rooms]
+            await self.send(text_data=json.dumps({'type': 'allRooms', 'rooms': rooms_data}))
+        except Exception as e:
+            logger.error(f'An error occurred while fetching all rooms: {e}', exc_info=True)
+            await self.send(text_data=json.dumps({'type': 'error', 'message': 'Could not retrieve rooms.'}))
