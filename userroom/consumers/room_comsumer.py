@@ -19,21 +19,11 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.user_service = UserService()
 
     async def connect(self):
-        try:
-            token = self.scope['query_string'].decode('utf8').split('=')[1]
-            self.user = await self.user_service.get_user_from_token(token)
-            if self.user:
-                await self.accept()
-            else:
-                await self.close(code=4001)
-        except (JWTError, IndexError, ValueError) as e:
-            logger.error(f'WebSocket connection error: {str(e)}')
-            await self.close()
+        await self.accept()  # Принять соединение сразу, идентификация будет происходить при получении сообщения.
 
-    async def disconnect(self, close_code):  # noqa: ARG002
-        if self.room_id and self.user:  # Убедитесь, что у нас есть ID комнаты и пользователь
+    async def disconnect(self, close_code):
+        if hasattr(self, 'room_id') and self.user:  # Убедитесь, что у нас есть ID комнаты и пользователь
             await self.commands.handle_leave_room(self.room_id, self.user)
-
 
     async def receive(self, text_data=None, bytes_data=None):
         if bytes_data is not None:
@@ -41,6 +31,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
         if text_data is not None:
             try:
                 text_data_json = json.loads(text_data)
+                
+                # Извлекаем токен из данных
+                token = text_data_json.get('token')
+                if token:
+                    self.user = await self.user_service.get_user_from_token(token)
+                    if not self.user:
+                        await self.send(text_data=json.dumps({'type': 'error', 'message': 'Invalid token.'}))
+                        return
+
                 message_type = text_data_json.get('type')
                 data = text_data_json.get('data', {})
 
