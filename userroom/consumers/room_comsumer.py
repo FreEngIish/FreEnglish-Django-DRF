@@ -30,8 +30,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
             logger.error(f'WebSocket connection error: {str(e)}')
             await self.close()
 
-    async def disconnect(self, close_code):
-        pass
+    async def disconnect(self, close_code):  # noqa: ARG002
+        if self.room_id and self.user:  # Убедитесь, что у нас есть ID комнаты и пользователь
+            await self.commands.handle_leave_room(self.room_id, self.user)
+
 
     async def receive(self, text_data=None, bytes_data=None):
         if bytes_data is not None:

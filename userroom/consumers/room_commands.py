@@ -35,6 +35,7 @@ class RoomCommands:
             )
 
             room_data = await self.room_service.serialize_room_data(room)
+            self.consumer.room_id = room_data['room_id']
             await self.consumer.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
 
         except Exception as e:
@@ -53,6 +54,7 @@ class RoomCommands:
                 if current_count < room.participant_limit:
                     added = await self.room_service.add_participant(room, user)
                     if added:
+                        self.consumer.room_id = room_id
                         await self.consumer.send(text_data=json.dumps({
                             'type': 'success',
                             'message': f'You have successfully joined the room "{room.room_name}".'
