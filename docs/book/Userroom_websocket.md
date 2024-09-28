@@ -59,10 +59,8 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 ### WebSocket Message:
 ```json
 {
-  "type": "joinRoom",
-  "data": {
-    "room_id": "47eb28c571ed40dea4b59b3e422f1bb2"
-  }
+    "token": "JWT_Token",
+  "type": "joinRoom"
 }
 ```
 
@@ -76,10 +74,8 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 ### WebSocket Message:
 ```json
 {
-  "type": "leaveRoom",
-  "data": {
-    "room_id": "47eb28c571ed40dea4b59b3e422f1bb2"
-  }
+    "token": "JWT_Token",
+  "type": "leaveRoom"
 }
 ```
 ## Method: `handle_edit_room`
