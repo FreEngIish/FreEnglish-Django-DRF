@@ -49,12 +49,10 @@ class RoomCommands:
 
     async def handle_join_room(self, room_id, user):
         try:
-            # Проверяем кэш на наличие информации о комнате, в которой пользователь уже находится
             cache_key = f'user_room_{user.id}'
             cached_room_id = cache.get(cache_key)
 
             if cached_room_id:
-                # Если пользователь уже находится в другой комнате
                 if cached_room_id != room_id:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'error',
@@ -62,22 +60,18 @@ class RoomCommands:
                     }))
                     return
                 else:
-                    # Пользователь уже в этой комнате, нет смысла снова присоединяться
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'info',
                         'message': f'You are already in the room "{room_id}".'
                     }))
                     return
 
-            # Флаг для проверки, выполнялся ли запрос к базе данных
             user_room = None
 
-            # Проверяем, если кэша нет, тогда делаем запрос к базе данных
             if not cached_room_id:
                 user_room = await self.room_service.get_user_room(user)
 
             if user_room:
-                # Изменяем на правильное поле для идентификатора комнаты
                 cache.set(cache_key, user_room.room_id, timeout=3600)
                 await self.consumer.send(text_data=json.dumps({
                     'type': 'error',
@@ -85,7 +79,6 @@ class RoomCommands:
                 }))
                 return
 
-            # Если пользователь не состоит в комнате, он может присоединиться к новой комнате
             room = await self.room_service.get_room(room_id)
             if room:
                 current_count = await self.room_service.count_participants(room)
@@ -93,7 +86,6 @@ class RoomCommands:
                     added = await self.room_service.add_participant(room, user)
                     if added:
                         self.consumer.room_id = room_id
-                        # Обновляем кэш новой информацией
                         cache.set(cache_key, room_id, timeout=3600)
                         await self.consumer.send(text_data=json.dumps({
                             'type': 'success',
@@ -135,9 +127,8 @@ class RoomCommands:
                     }))
                     logger.info(f'Participant {user.email} removed from RoomMembers for room {room.room_name}')
 
-                    # Удаляем информацию о комнате из кэша
                     cache_key = f'user_room_{user.id}'
-                    cache.delete(cache_key)  # Удаляем кэш для пользователя
+                    cache.delete(cache_key)
                 else:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'info',
