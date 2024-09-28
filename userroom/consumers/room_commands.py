@@ -50,7 +50,7 @@ class RoomCommands:
     async def handle_join_room(self, room_id, user):
         try:
             # Проверяем кэш на наличие информации о комнате, в которой пользователь уже находится
-            cache_key = f"user_room_{user.id}"
+            cache_key = f'user_room_{user.id}'
             cached_room_id = cache.get(cache_key)
 
             if cached_room_id:
@@ -58,7 +58,7 @@ class RoomCommands:
                 if cached_room_id != room_id:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'error',
-                        'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'
+                        'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'  # noqa: E501
                     }))
                     return
                 else:
@@ -81,7 +81,7 @@ class RoomCommands:
                 cache.set(cache_key, user_room.room_id, timeout=3600)
                 await self.consumer.send(text_data=json.dumps({
                     'type': 'error',
-                    'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'
+                    'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'  # noqa: E501
                 }))
                 return
 
@@ -136,7 +136,7 @@ class RoomCommands:
                     logger.info(f'Participant {user.email} removed from RoomMembers for room {room.room_name}')
 
                     # Удаляем информацию о комнате из кэша
-                    cache_key = f"user_room_{user.id}"
+                    cache_key = f'user_room_{user.id}'
                     cache.delete(cache_key)  # Удаляем кэш для пользователя
                 else:
                     await self.consumer.send(text_data=json.dumps({
