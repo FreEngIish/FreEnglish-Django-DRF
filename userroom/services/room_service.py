@@ -62,6 +62,10 @@ class RoomService:
     def count_participants(self, room):
         return room.current_participants.count()
 
+    async def serialize_room_data(self, room):
+        from userroom.serializers import UserRoomSerializer
+        return await database_sync_to_async(lambda: UserRoomSerializer(room).data)()
+
     @database_sync_to_async
     def serialize_rooms_data(self, rooms):
         from userroom.serializers import UserRoomSerializer
