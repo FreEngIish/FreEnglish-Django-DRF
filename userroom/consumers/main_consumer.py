@@ -62,8 +62,9 @@ class MainConsumer(AsyncWebsocketConsumer):
 
     async def handle_get_all_rooms(self):
         try:
-            rooms = await self.room_service.get_all_rooms()
-            rooms_data = [await self.room_service.serialize_room_data(room) for room in rooms]
+            rooms = await self.room_service.get_all_rooms()  # Асинхронный запрос всех комнат
+            rooms_data = await self.room_service.serialize_rooms_data(rooms)  # Новый метод для сериализации
+            
             await self.send(text_data=json.dumps({'type': 'allRooms', 'rooms': rooms_data}))
         except Exception as e:
             logger.error(f'An error occurred while fetching all rooms: {e}', exc_info=True)
