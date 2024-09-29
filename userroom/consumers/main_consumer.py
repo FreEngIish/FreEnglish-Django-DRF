@@ -45,7 +45,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 if message_type == 'createRoom':
                     await self.commands.handle_create_room(data, user=self.user)
                 elif message_type == 'getAllRooms':
-                    await self.handle_get_all_rooms()  # Получить все комнаты
+                    await self.handle_get_all_rooms()
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 
@@ -62,8 +62,8 @@ class MainConsumer(AsyncWebsocketConsumer):
 
     async def handle_get_all_rooms(self):
         try:
-            rooms = await self.room_service.get_all_rooms()  # Асинхронный запрос всех комнат
-            rooms_data = await self.room_service.serialize_rooms_data(rooms)  # Новый метод для сериализации
+            rooms = await self.room_service.get_all_rooms()
+            rooms_data = await self.room_service.serialize_rooms_data(rooms)
             
             await self.send(text_data=json.dumps({'type': 'allRooms', 'rooms': rooms_data}))
         except Exception as e:
