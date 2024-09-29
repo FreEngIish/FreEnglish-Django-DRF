@@ -23,6 +23,8 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.accept()
         await self.channel_layer.group_add('rooms_group', self.channel_name)
 
+        await self.handle_get_all_rooms()
+
     async def disconnect(self, close_code):  # noqa: ARG002
         if self.user and self.room_id:
             await self.commands.handle_leave_room(self.room_id, self.user)
@@ -44,8 +46,6 @@ class MainConsumer(AsyncWebsocketConsumer):
 
                 if message_type == 'createRoom':
                     await self.commands.handle_create_room(data, user=self.user)
-                elif message_type == 'getAllRooms':
-                    await self.handle_get_all_rooms()
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 
