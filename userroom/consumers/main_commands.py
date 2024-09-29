@@ -43,7 +43,7 @@ class MainCommands:
                 }
             )
 
-            await self.consumer.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
+            # await self.consumer.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
 
         except Exception as e:
             logger.error(f'An error occurred while creating a room: {e}', exc_info=True)
