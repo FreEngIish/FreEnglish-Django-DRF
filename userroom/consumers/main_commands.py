@@ -39,14 +39,10 @@ class MainCommands:
                 creator=user,
             )
 
-            room_data = await self.room_service.serialize_room_data(room)
-            self.consumer.room_id = room_data['room_id']
-
             await self.consumer.channel_layer.group_send(
                 'rooms_group',
                 {
-                    'type': 'room_created',
-                    'room': room_data,
+                    'type': 'get_all_rooms',
                 }
             )
 
