@@ -81,7 +81,7 @@ class RoomService:
     @database_sync_to_async
     def get_all_rooms(self):
         from userroom.models import UserRoom
-        return UserRoom.objects.all()
+        return UserRoom.objects.all().order_by('-creation_date')
     @database_sync_to_async
     def count_user_rooms(self, user):
         from userroom.models import UserRoom
