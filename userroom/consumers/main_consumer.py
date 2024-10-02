@@ -67,3 +67,5 @@ class MainConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f'An error occurred while fetching all rooms: {e}', exc_info=True)
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'Could not retrieve rooms.'}))
+    async def get_all_rooms(self, event):
+        await self.handle_get_all_rooms()

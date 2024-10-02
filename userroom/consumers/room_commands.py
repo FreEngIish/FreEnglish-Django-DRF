@@ -138,6 +138,13 @@ class RoomCommands:
                         'message': 'Room updated successfully.'
                     }))
                     logger.info(f'Room {room.room_name} updated by {user.email}')
+
+                    await self.consumer.channel_layer.group_send(
+                        'rooms_group',
+                        {
+                            'type': 'get_all_rooms',
+                        }
+                    )
                 else:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'error',
