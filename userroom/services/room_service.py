@@ -8,7 +8,7 @@ logger = logging.getLogger('freenglish')
 class RoomService:
     @database_sync_to_async
     def create_room(self, room_name, native_language, language_level, participant_limit, creator):
-        from userroom.models import RoomMembers, UserRoom
+        from userroom.models import UserRoom
 
         room = UserRoom(
             room_name=room_name,
@@ -18,8 +18,6 @@ class RoomService:
             creator=creator,
         )
         room.save()
-        room.current_participants.add(creator)
-        RoomMembers.objects.create(room=room, user=creator)
         return room
 
     @database_sync_to_async
@@ -65,6 +63,26 @@ class RoomService:
         return room.current_participants.count()
 
     async def serialize_room_data(self, room):
-            from userroom.serializers import UserRoomSerializer
+        from userroom.serializers import UserRoomSerializer
+        return await database_sync_to_async(lambda: UserRoomSerializer(room).data)()
 
-            return await database_sync_to_async(lambda: UserRoomSerializer(room).data)()
+    @database_sync_to_async
+    def serialize_rooms_data(self, rooms):
+        from userroom.serializers import UserRoomSerializer
+
+        return [UserRoomSerializer(room).data for room in rooms]
+    
+    @database_sync_to_async
+    def get_user_room(self, user):
+        from userroom.models import RoomMembers
+        room_member = RoomMembers.objects.filter(user=user).first()
+        return room_member.room if room_member else None
+
+    @database_sync_to_async
+    def get_all_rooms(self):
+        from userroom.models import UserRoom
+        return UserRoom.objects.all()
+    @database_sync_to_async
+    def count_user_rooms(self, user):
+        from userroom.models import UserRoom
+        return UserRoom.objects.filter(creator=user).count()

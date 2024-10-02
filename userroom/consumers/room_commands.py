@@ -1,8 +1,8 @@
 import json
 import logging
-from typing import Any
 
 from channels.db import database_sync_to_async
+from django.core.cache import cache
 
 from userroom.services.room_service import RoomService
 
@@ -14,45 +14,46 @@ class RoomCommands:
         self.consumer = consumer
         self.room_service = RoomService()
 
-    async def handle_create_room(self, data: dict[str, Any], user):
-
-        try:
-            room_name = data.get('room_name')
-            native_language = data.get('native_language')
-            language_level = data.get('language_level', 'Beginner')
-            participant_limit = data.get('participant_limit', 10)
-
-            if not room_name or not native_language or not language_level:
-                await self.consumer.send(text_data=json.dumps({'type': 'error', 'message': 'Missing required fields'}))
-                return
-
-            room = await self.room_service.create_room(
-                room_name=room_name,
-                native_language=native_language,
-                language_level=language_level,
-                participant_limit=participant_limit,
-                creator=user,
-            )
-
-            room_data = await self.room_service.serialize_room_data(room)
-            await self.consumer.send(text_data=json.dumps({'type': 'roomCreated', 'room': room_data}))
-
-        except Exception as e:
-            logger.error(f'An error occurred while creating a room: {e}', exc_info=True)
-            await self.consumer.send(
-                text_data=json.dumps(
-                    {'type': 'error', 'message': 'An error occurred while creating the room. Please try again later.'}
-                )
-            )
-
     async def handle_join_room(self, room_id, user):
         try:
+            cache_key = f'user_room_{user.id}'
+            cached_room_id = cache.get(cache_key)
+
+            if cached_room_id:
+                if cached_room_id != room_id:
+                    await self.consumer.send(text_data=json.dumps({
+                        'type': 'error',
+                        'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'  # noqa: E501
+                    }))
+                    return
+                else:
+                    await self.consumer.send(text_data=json.dumps({
+                        'type': 'info',
+                        'message': f'You are already in the room "{room_id}".'
+                    }))
+                    return
+
+            user_room = None
+
+            if not cached_room_id:
+                user_room = await self.room_service.get_user_room(user)
+
+            if user_room:
+                cache.set(cache_key, user_room.room_id, timeout=3600)
+                await self.consumer.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'  # noqa: E501
+                }))
+                return
+
             room = await self.room_service.get_room(room_id)
             if room:
                 current_count = await self.room_service.count_participants(room)
                 if current_count < room.participant_limit:
                     added = await self.room_service.add_participant(room, user)
                     if added:
+                        self.consumer.room_id = room_id
+                        cache.set(cache_key, room_id, timeout=3600)
                         await self.consumer.send(text_data=json.dumps({
                             'type': 'success',
                             'message': f'You have successfully joined the room "{room.room_name}".'
@@ -92,6 +93,9 @@ class RoomCommands:
                         'message': f'You have left the room "{room.room_name}".'
                     }))
                     logger.info(f'Participant {user.email} removed from RoomMembers for room {room.room_name}')
+
+                    cache_key = f'user_room_{user.id}'
+                    cache.delete(cache_key)
                 else:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'info',
