@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-
 User = get_user_model()
 
 class UserService:
@@ -29,7 +28,7 @@ class UserService:
             google_sub (str): The unique identifier for the user provided by Google.
             email (str): The email address of the user.
             user_info (dict): A dictionary containing user information from Google,
-                              including 'given_name' and 'family_name'.
+                              including 'given_name', 'family_name', 'picture', and 'locale'.
 
         Returns:
             tuple: A tuple containing:
@@ -44,12 +43,16 @@ class UserService:
                 'username': email.split('@')[0],  # Set username by email
                 'first_name': user_info.get('given_name', ''),
                 'last_name': user_info.get('family_name', ''),
+                'avatar': user_info.get('picture', ''),  # Save avatar URL
+                'locale': user_info.get('locale', ''),  # Save locale
             }
         )
 
         if not created:
-            # If the user already exists, update last_login
+            # If the user already exists, update last_login and other fields
             user.last_login = timezone.now()
+            user.avatar = user_info.get('picture', user.avatar)  # Update avatar if available
+            user.locale = user_info.get('locale', user.locale)  # Update locale if available
             user.save()
 
         return user, created

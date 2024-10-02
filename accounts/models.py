@@ -33,6 +33,9 @@ class User(AbstractBaseUser, PermissionsMixin):  # noqa: F811
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    
+    avatar = models.URLField(blank=True, null=True)
+    locale = models.CharField(max_length=20, blank=True, null=True)
 
     google_sub = models.CharField(max_length=255, unique=True)
 

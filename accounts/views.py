@@ -39,24 +39,10 @@ def login(request):  # noqa: ARG001
     return redirect(google_auth_url)
 
 def callback(request):
-    """
-    Handles the callback from Google's OAuth 2.0 server after the user
-    has authenticated. It exchanges the authorization code for access and
-    refresh tokens, retrieves user information, and either creates a new
-    user or retrieves an existing one.
-
-    Args:
-        request: The HTTP request object containing the authorization code.
-
-    Returns:
-        JsonResponse: Contains user information, access token, and refresh token
-        or an error message if the process fails.
-    """
-    code = request.GET.get('code')  # Get the authorization code
+    code = request.GET.get('code')
     if not code:
         return JsonResponse({'error': 'Authorization code is missing'}, status=400)
 
-    # Exchange the code for access_token and refresh_token
     token_response = requests.post(
         'https://oauth2.googleapis.com/token',
         data={
@@ -75,7 +61,6 @@ def callback(request):
     if not access_token:
         return JsonResponse({'error': 'Access token is missing'}, status=400)
 
-    # Request user information
     user_info_response = requests.get(
         'https://www.googleapis.com/oauth2/v1/userinfo',
         headers={'Authorization': f'Bearer {access_token}'}
@@ -83,21 +68,22 @@ def callback(request):
 
     user_info = user_info_response.json()
     email = user_info.get('email')
-    google_sub = user_info.get('id')  # Take google_sub
+    google_sub = user_info.get('id')
 
     # Save user to the database through the service
     user, created = user_service.get_or_create_user(google_sub, email, user_info)
 
     if created:
-        user.set_unusable_password()   # Set unusable password for users
+        user.set_unusable_password()  # Set unusable password for users
         user.save()
 
-    # Return user data
     return JsonResponse({
         'email': email,
         'google_sub': google_sub,
         'access_token': access_token,
-        'refresh_token': refresh_token
+        'refresh_token': refresh_token,
+        'avatar': user_info.get('picture', ''),
+        'locale': user_info.get('locale', ''),
     })
 
 @require_POST
