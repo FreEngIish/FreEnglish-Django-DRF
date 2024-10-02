@@ -26,8 +26,6 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.handle_get_all_rooms()
 
     async def disconnect(self, close_code):  # noqa: ARG002
-        if self.user and self.room_id:
-            await self.commands.handle_leave_room(self.room_id, self.user)
         await self.channel_layer.group_discard('rooms_group', self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):  # noqa: ARG002

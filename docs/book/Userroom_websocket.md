@@ -34,6 +34,7 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 ### WebSocket Message:
 ```json
 {
+  "token": "JWT_Token",
   "type": "createRoom",
   "data": {
     "room_name": "English Practice",
@@ -89,6 +90,7 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 ### WebSocket Message:
 ```json
 {
+  "token": "JWT_Token",
   "type": "editRoom",
   "room_id": "47eb28c571ed40dea4b59b3e422f1bb2",
   "data": {

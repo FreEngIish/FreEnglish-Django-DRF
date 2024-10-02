@@ -14,6 +14,14 @@ class MainCommands:
 
     async def handle_create_room(self, data: dict[str, Any], user):
         try:
+            user_rooms_count = await self.room_service.count_user_rooms(user)
+            if user_rooms_count >= 3:
+                await self.consumer.send(text_data=json.dumps({
+                    'type': 'error', 
+                    'message': 'You can only create up to 3 rooms.'
+                }))
+                return
+
             room_name = data.get('room_name')
             native_language = data.get('native_language')
             language_level = data.get('language_level', 'Beginner')
