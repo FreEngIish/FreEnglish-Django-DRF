@@ -2,6 +2,8 @@ import json
 
 import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -171,8 +173,6 @@ def get_csrf_token(request):
     """
     return JsonResponse({'csrf_token': request.META.get('CSRF_COOKIE')})
 
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def get_user_info(request):
@@ -188,13 +188,9 @@ def get_user_info(request):
         'last_name': user.last_name,
         'avatar': user.avatar,
         'locale': user.locale,
-        'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M:%S')  # Форматируем дату
+        'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
     })
 
-
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
 
 @csrf_exempt
 @login_required
@@ -211,7 +207,6 @@ def update_user_info(request):
 
         user = request.user
 
-        # Обновляем поля, если они переданы в запросе
         if 'avatar' in data:
             user.avatar = data['avatar']
         if 'locale' in data:
@@ -221,7 +216,6 @@ def update_user_info(request):
         if 'last_name' in data:
             user.last_name = data['last_name']
 
-        # Сохраняем изменения в базе данных
         user.save()
 
         return JsonResponse({
@@ -234,8 +228,6 @@ def update_user_info(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-from django.http import JsonResponse
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
