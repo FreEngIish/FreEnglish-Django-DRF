@@ -9,6 +9,10 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from rest_framework.decorators import api_view
+
 from .services import UserService
 
 
@@ -174,6 +178,27 @@ def get_csrf_token(request):
     return JsonResponse({'csrf_token': request.META.get('CSRF_COOKIE')})
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Получает информацию о текущем пользователе, включая username и date_joined.",
+    responses={
+        200: openapi.Response(
+            description="User information",
+            examples={
+                "application/json": {
+                    "email": "user@example.com",
+                    "username": "user123",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "avatar": "https://example.com/avatar.jpg",
+                    "locale": "en-US",
+                    "date_joined": "2024-10-03 12:34:56"
+                }
+            }
+        )
+    }
+)
+@api_view(['GET'])
 @login_required
 def get_user_info(request):
     """
@@ -191,7 +216,34 @@ def get_user_info(request):
         'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
     })
 
-
+@swagger_auto_schema(
+    method='patch',
+    operation_description="Обновляет информацию о текущем пользователе: avatar, locale, first_name, last_name.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'avatar': openapi.Schema(type=openapi.TYPE_STRING, description='URL аватара пользователя'),
+            'locale': openapi.Schema(type=openapi.TYPE_STRING, description='Локаль пользователя'),
+            'first_name': openapi.Schema(type=openapi.TYPE_STRING, description='Имя пользователя'),
+            'last_name': openapi.Schema(type=openapi.TYPE_STRING, description='Фамилия пользователя')
+        }
+    ),
+    responses={
+        200: openapi.Response(
+            description="User updated successfully",
+            examples={
+                "application/json": {
+                    "message": "User updated successfully",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "avatar": "https://example.com/avatar.jpg",
+                    "locale": "en-US"
+                }
+            }
+        )
+    }
+)
+@api_view(['PATCH'])
 @csrf_exempt
 @login_required
 def update_user_info(request):
@@ -231,6 +283,21 @@ def update_user_info(request):
 
 User = get_user_model()
 
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Удаляет текущего пользователя.",
+    responses={
+        200: openapi.Response(
+            description="User deleted successfully",
+            examples={
+                "application/json": {
+                    "message": "User deleted successfully"
+                }
+            }
+        )
+    }
+)
+@api_view(['DELETE'])
 @csrf_exempt
 @login_required
 def delete_user(request):
