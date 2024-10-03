@@ -170,3 +170,81 @@ def get_csrf_token(request):
         JsonResponse: Contains the CSRF token for the client to use.
     """
     return JsonResponse({'csrf_token': request.META.get('CSRF_COOKIE')})
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def get_user_info(request):
+    """
+    Получает информацию о текущем пользователе, включая username и date_joined.
+    Декоратор login_required требует авторизации для доступа к этому представлению.
+    """
+    user = request.user
+    return JsonResponse({
+        'email': user.email,
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'avatar': user.avatar,
+        'locale': user.locale,
+        'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M:%S')  # Форматируем дату
+    })
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
+@csrf_exempt
+@login_required
+def update_user_info(request):
+    """
+    Обновляет информацию о текущем пользователе: avatar, locale, first_name, last_name.
+    Обновление происходит частично (PATCH).
+    """
+    if request.method == 'PATCH':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        user = request.user
+
+        # Обновляем поля, если они переданы в запросе
+        if 'avatar' in data:
+            user.avatar = data['avatar']
+        if 'locale' in data:
+            user.locale = data['locale']
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+
+        # Сохраняем изменения в базе данных
+        user.save()
+
+        return JsonResponse({
+            'message': 'User updated successfully',
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'avatar': user.avatar,
+            'locale': user.locale
+        })
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@csrf_exempt
+@login_required
+def delete_user(request):
+    """
+    Удаляет текущего пользователя.
+    """
+    user = request.user
+    user.delete()
+    return JsonResponse({'message': 'User deleted successfully'})

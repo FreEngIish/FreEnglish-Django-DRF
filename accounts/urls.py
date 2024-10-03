@@ -21,4 +21,10 @@ urlpatterns = [
 
     # Temporary route to obtain CSRF token; this is a workaround until Swagger is implemented
     path('csrf-token/', views.get_csrf_token, name='get_csrf_token'),
+
+    path('user/info/', views.get_user_info, name='get_user_info'),  # Read
+    
+    path('user/update/', views.update_user_info, name='update_user_info'),  # Update
+    
+    path('user/delete/', views.delete_user, name='delete_user'),  # Delete
 ]
