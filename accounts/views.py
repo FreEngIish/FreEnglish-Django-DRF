@@ -8,9 +8,8 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view
 
 from .services import UserService
@@ -18,6 +17,16 @@ from .services import UserService
 
 user_service = UserService()
 
+@swagger_auto_schema(
+    method='get',
+    operation_description='Initiates the OAuth login process by redirecting the user to the Google authentication URL.',
+    responses={
+        302: openapi.Response(
+            description='Redirects to Google OAuth 2.0 login page.'
+        )
+    }
+)
+@api_view(['GET'])
 def login(request):  # noqa: ARG001
     """
     Initiates the OAuth 2.0 login process by redirecting the user to the Google
@@ -44,6 +53,34 @@ def login(request):  # noqa: ARG001
     )
     return redirect(google_auth_url)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description='Handles the callback from Google after user authentication.',
+    responses={
+        200: openapi.Response(
+            description='Returns user information and tokens.',
+            examples={
+                'application/json': {
+                    'email': 'user@example.com',
+                    'google_sub': '123456789',
+                    'access_token': 'new_access_token',
+                    'refresh_token': 'new_refresh_token',
+                    'avatar': 'https://example.com/avatar.jpg',
+                    'locale': 'en-US',
+                }
+            }
+        ),
+        400: openapi.Response(
+            description='Error message if the authorization code is missing or access token is missing.',
+            examples={
+                'application/json': {
+                    'error': 'Authorization code is missing'
+                }
+            }
+        )
+    }
+)
+@api_view(['GET'])
 def callback(request):
     code = request.GET.get('code')
     if not code:
@@ -92,6 +129,36 @@ def callback(request):
         'locale': user_info.get('locale', ''),
     })
 
+
+@swagger_auto_schema(
+    method='post',
+    operation_description='Updates the access token using the refresh token.',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'refresh_token': openapi.Schema(type=openapi.TYPE_STRING, description='User refresh token.'),
+        },
+    ),
+    responses={
+        200: openapi.Response(
+            description='Returns a new access token.',
+            examples={
+                'application/json': {
+                    'access_token': 'new_access_token'
+                }
+            }
+        ),
+        400: openapi.Response(
+            description='Error with the refresh token.',
+            examples={
+                'application/json': {
+                    'error': 'Invalid refresh token'
+                }
+            }
+        )
+    }
+)
+@api_view(['POST'])
 @require_POST
 def refresh_access_token_view(request):
     """
@@ -180,19 +247,19 @@ def get_csrf_token(request):
 
 @swagger_auto_schema(
     method='get',
-    operation_description="Получает информацию о текущем пользователе, включая username и date_joined.",
+    operation_description='Gets information about the current user, including username and date_joined.',
     responses={
         200: openapi.Response(
-            description="User information",
+            description='User information',
             examples={
-                "application/json": {
-                    "email": "user@example.com",
-                    "username": "user123",
-                    "first_name": "John",
-                    "last_name": "Doe",
-                    "avatar": "https://example.com/avatar.jpg",
-                    "locale": "en-US",
-                    "date_joined": "2024-10-03 12:34:56"
+                'application/json': {
+                    'email': 'user123@example.com',
+                    'username': 'user123',
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'avatar': 'https://example.com/avatar.jpg',
+                    'locale': 'en-US',
+                    'date_joined': '2024-10-03 12:34:56'
                 }
             }
         )
@@ -202,8 +269,8 @@ def get_csrf_token(request):
 @login_required
 def get_user_info(request):
     """
-    Получает информацию о текущем пользователе, включая username и date_joined.
-    Декоратор login_required требует авторизации для доступа к этому представлению.
+    Gets information about the current user, including username and date_joined.
+    The login_required decorator requires authentication to access this view.
     """
     user = request.user
     return JsonResponse({
@@ -218,26 +285,26 @@ def get_user_info(request):
 
 @swagger_auto_schema(
     method='patch',
-    operation_description="Обновляет информацию о текущем пользователе: avatar, locale, first_name, last_name.",
+    operation_description='Updates the current user information: avatar, locale, first_name, last_name.',
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'avatar': openapi.Schema(type=openapi.TYPE_STRING, description='URL аватара пользователя'),
-            'locale': openapi.Schema(type=openapi.TYPE_STRING, description='Локаль пользователя'),
-            'first_name': openapi.Schema(type=openapi.TYPE_STRING, description='Имя пользователя'),
-            'last_name': openapi.Schema(type=openapi.TYPE_STRING, description='Фамилия пользователя')
+            'avatar': openapi.Schema(type=openapi.TYPE_STRING, description='User avatar URL'),
+            'locale': openapi.Schema(type=openapi.TYPE_STRING, description='User locale'),
+            'first_name': openapi.Schema(type=openapi.TYPE_STRING, description='User first name'),
+            'last_name': openapi.Schema(type=openapi.TYPE_STRING, description='User last name')
         }
     ),
     responses={
         200: openapi.Response(
-            description="User updated successfully",
+            description='User updated successfully',
             examples={
-                "application/json": {
-                    "message": "User updated successfully",
-                    "first_name": "John",
-                    "last_name": "Doe",
-                    "avatar": "https://example.com/avatar.jpg",
-                    "locale": "en-US"
+                'application/json': {
+                    'message': 'User updated successfully',
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'avatar': 'https://example.com/avatar.jpg',
+                    'locale': 'en-US'
                 }
             }
         )
@@ -248,8 +315,8 @@ def get_user_info(request):
 @login_required
 def update_user_info(request):
     """
-    Обновляет информацию о текущем пользователе: avatar, locale, first_name, last_name.
-    Обновление происходит частично (PATCH).
+    Updates the current user information: avatar, locale, first_name, last_name.
+    The update is done partially (PATCH).
     """
     if request.method == 'PATCH':
         try:
@@ -285,13 +352,13 @@ User = get_user_model()
 
 @swagger_auto_schema(
     method='delete',
-    operation_description="Удаляет текущего пользователя.",
+    operation_description='Deletes the current user.',
     responses={
         200: openapi.Response(
-            description="User deleted successfully",
+            description='User deleted successfully',
             examples={
-                "application/json": {
-                    "message": "User deleted successfully"
+                'application/json': {
+                    'message': 'User deleted successfully'
                 }
             }
         )
@@ -302,7 +369,7 @@ User = get_user_model()
 @login_required
 def delete_user(request):
     """
-    Удаляет текущего пользователя.
+    Deletes the current user.
     """
     user = request.user
     user.delete()
