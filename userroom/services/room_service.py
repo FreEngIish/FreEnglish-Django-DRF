@@ -2,8 +2,8 @@ import logging
 
 from channels.db import database_sync_to_async
 
-
 logger = logging.getLogger('freenglish')
+
 
 class RoomService:
     @database_sync_to_async
@@ -32,6 +32,11 @@ class RoomService:
             room.participant_limit = participant_limit
         room.save()
         return room
+
+    @database_sync_to_async
+    def update_room_status(self, room, status):
+        room.status = status
+        room.save()
 
     @database_sync_to_async
     def get_room(self, room_id):
@@ -71,7 +76,7 @@ class RoomService:
         from userroom.serializers import UserRoomSerializer
 
         return [UserRoomSerializer(room).data for room in rooms]
-    
+
     @database_sync_to_async
     def get_user_room(self, user):
         from userroom.models import RoomMembers
@@ -82,6 +87,7 @@ class RoomService:
     def get_all_rooms(self):
         from userroom.models import UserRoom
         return UserRoom.objects.all().order_by('-creation_date')
+
     @database_sync_to_async
     def count_user_rooms(self, user):
         from userroom.models import UserRoom

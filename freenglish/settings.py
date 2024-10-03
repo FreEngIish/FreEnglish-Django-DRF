@@ -163,3 +163,8 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/5'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
