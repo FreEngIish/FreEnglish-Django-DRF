@@ -1,0 +1,21 @@
+from .base import *
+
+DEBUG = True
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR.parent, 'db.sqlite3'),
+    }
+}
+
+
+LOGIN_REDIRECT_URL = 'http://localhost:8000/accounts/complete/google-oauth2/'
+LOGOUT_REDIRECT_URL = 'http://localhost:8000/accounts/complete/google-oauth2/'
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
+]
