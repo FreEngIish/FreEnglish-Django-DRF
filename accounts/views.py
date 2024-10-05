@@ -14,8 +14,8 @@ from rest_framework.decorators import api_view
 
 from .services import UserService
 
-
 user_service = UserService()
+
 
 def login(request):  # noqa: ARG001
     """
@@ -36,12 +36,13 @@ def login(request):  # noqa: ARG001
         '&redirect_uri={redirect_uri}'
         '&scope=email%20openid%20profile'
         '&access_type=offline'  # Important for obtaining a refresh token
-        '&prompt=consent'       # Important for re-requesting the refresh token
+        '&prompt=consent'  # Important for re-requesting the refresh token
     ).format(
         client_id=settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
         redirect_uri='http://localhost:8000/accounts/complete/google-oauth2/'
     )
     return redirect(google_auth_url)
+
 
 def callback(request):
     code = request.GET.get('code')
@@ -153,6 +154,7 @@ def refresh_access_token_view(request):
         'expires_in': response.get('expires_in')
     })
 
+
 def refresh_access_token(refresh_token):
     """
     Requests a new access token using the provided refresh token.
@@ -175,6 +177,7 @@ def refresh_access_token(refresh_token):
     )
     return response.json()
 
+
 @require_GET
 def protected_view(request):
     """
@@ -191,6 +194,7 @@ def protected_view(request):
     if hasattr(request, 'user_email'):
         return JsonResponse({'message': 'This is a protected view', 'email': request.user_email})
     return JsonResponse({'error': 'Unauthorized'}, status=401)
+
 
 @csrf_exempt
 def get_csrf_token(request):
@@ -244,6 +248,7 @@ def get_user_info(request):
         'locale': user.locale,
         'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
     })
+
 
 @swagger_auto_schema(
     method='patch',
@@ -311,6 +316,7 @@ def update_user_info(request):
 
 
 User = get_user_model()
+
 
 @swagger_auto_schema(
     method='delete',
