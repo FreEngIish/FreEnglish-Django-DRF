@@ -8,7 +8,7 @@ schema_view = get_schema_view(
    openapi.Info(
       title="UserRoom API Documentation",
       default_version='v1',
-      description="API documentation for the UserRoom project",
+      description="Link for google login http://localhost:8000/accounts/login/google/",
       terms_of_service="https://www.google.com/policies/terms/",
       contact=openapi.Contact(email="your-email@example.com"),
       license=openapi.License(name="BSD License"),

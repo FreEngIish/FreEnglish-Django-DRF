@@ -17,16 +17,6 @@ from .services import UserService
 
 user_service = UserService()
 
-@swagger_auto_schema(
-    method='get',
-    operation_description='Initiates the OAuth login process by redirecting the user to the Google authentication URL.',
-    responses={
-        302: openapi.Response(
-            description='Redirects to Google OAuth 2.0 login page.'
-        )
-    }
-)
-@api_view(['GET'])
 def login(request):  # noqa: ARG001
     """
     Initiates the OAuth 2.0 login process by redirecting the user to the Google
@@ -53,34 +43,6 @@ def login(request):  # noqa: ARG001
     )
     return redirect(google_auth_url)
 
-@swagger_auto_schema(
-    method='get',
-    operation_description='Handles the callback from Google after user authentication.',
-    responses={
-        200: openapi.Response(
-            description='Returns user information and tokens.',
-            examples={
-                'application/json': {
-                    'email': 'user@example.com',
-                    'google_sub': '123456789',
-                    'access_token': 'new_access_token',
-                    'refresh_token': 'new_refresh_token',
-                    'avatar': 'https://example.com/avatar.jpg',
-                    'locale': 'en-US',
-                }
-            }
-        ),
-        400: openapi.Response(
-            description='Error message if the authorization code is missing or access token is missing.',
-            examples={
-                'application/json': {
-                    'error': 'Authorization code is missing'
-                }
-            }
-        )
-    }
-)
-@api_view(['GET'])
 def callback(request):
     code = request.GET.get('code')
     if not code:
