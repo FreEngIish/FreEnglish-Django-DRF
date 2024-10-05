@@ -1,4 +1,5 @@
-from .base import *
+from .base import *  # noqa: F403
+
 
 DEBUG = False
 
@@ -7,11 +8,11 @@ ALLOWED_HOSTS = ['production_domain.com']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', '5432'),
+        'NAME': config('DB_NAME'),  # noqa: F405
+        'USER': config('DB_USER'),  # noqa: F405
+        'PASSWORD': config('DB_PASSWORD'),  # noqa: F405
+        'HOST': config('DB_HOST'),  # noqa: F405
+        'PORT': config('DB_PORT', '5432'),  # noqa: F405
     }
 }
 
