@@ -60,6 +60,9 @@ class RoomCommands:
                             'message': f'You have successfully joined the room "{room.room_name}".'
                         }))
                         logger.info(f'Participant {user.email} added to RoomMembers for room {room.room_name}')
+
+                        await self.send_participants_list(room_id)
+
                     else:
                         await self.consumer.send(text_data=json.dumps({
                             'type': 'info',
@@ -83,7 +86,6 @@ class RoomCommands:
                 'message': 'Could not join room.'
             }))
 
-
     async def handle_leave_room(self, room_id, user):
         try:
             room = await self.room_service.get_room(room_id)
@@ -105,6 +107,9 @@ class RoomCommands:
 
                     cache_key = f'user_room_{user.id}'
                     cache.delete(cache_key)
+
+                    await self.send_participants_list(room_id)
+
                 else:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'info',
@@ -170,3 +175,20 @@ class RoomCommands:
                 'type': 'error',
                 'message': 'Could not edit room.'
             }))
+
+    async def send_participants_list(self, room_id):
+        room = await self.room_service.get_room(room_id)
+        if room:
+            participants = await self.room_service.get_room_participants(room)
+            participants_data = [{"id": participant.id, "username": participant.username} for participant in
+                                 participants]
+            logger.info(f'Sending participants list for room_{room_id}: {participants_data}')
+            await self.consumer.channel_layer.group_send(
+                f'room_{room_id}',
+                {
+                    'type': 'participants_list',
+                    'participants': participants_data
+                }
+            )
+
+
