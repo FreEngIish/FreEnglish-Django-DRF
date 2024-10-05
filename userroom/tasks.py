@@ -34,7 +34,6 @@ def deactivate_empty_room_after_creation(room_id):
     room = async_to_sync(room_service.get_room)(room_id)
 
     if room:
-        # Проверяем, зашли ли участники в комнату
         participant_count = async_to_sync(room_service.count_participants)(room)
         if participant_count == 0:
             async_to_sync(room_service.update_room_status)(room, 'Inactive')
