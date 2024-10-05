@@ -30,7 +30,8 @@ When another member of the room receives SDP, the server will send a reply messa
   "sender": "username_of_other_participant"
 }
 ```
-### Exchange of ICE candidates
+----
+## Exchange of ICE candidates
 ICE candidates are required to establish a connection between WebRTC participants, even if they are behind NAT or firewalls. ICE candidates are also generated on the WebRTC client side and transmitted via WebSocket to the server.
 #### An example of sending an ICE candidate via WebSocket:
   - `URL WebSocket`: `ws://example.com/ws/rooms/{room_id}/`
