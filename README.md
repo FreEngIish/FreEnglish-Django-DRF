@@ -18,12 +18,12 @@
 
 ## Настройка проекта
 
-1. Переименуйте файл `.env.example` в `.env` и настройте переменные окружения. Пример файла:
+1. Переименуйте файл `.env.dev.example` в `.env` и настройте переменные окружения. Пример файла:
 
     ```bash
     SECRET_KEY=django-insecure-jsp7vi%&d33*g^po98m^y6_w54_dczhbpy
-    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=Get from Google Console
-    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=Get from Google Console
+    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=Get from Google Console      (callbak url for authentification http://localhost:8000/accounts/complete/google-oauth2/)
+    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=Get from Google Console   (callbak url for google authentification http://localhost:8000/accounts/complete/google-oauth2/)
     ```
 
 2. Примените миграции для базы данных:
