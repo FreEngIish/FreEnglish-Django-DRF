@@ -25,6 +25,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         if await self.room_exists(self.room_id):
             await self.accept()
+            await self.channel_layer.group_add(f'room_{self.room_id}', self.channel_name)
         else:
             await self.close()
             logger.warning(f'Tried to connect to non-existent room {self.room_id}')
@@ -32,6 +33,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):  # noqa: ARG002
         if self.room_id and self.user:
             await self.commands.handle_leave_room(self.room_id, self.user)
+            await self.channel_layer.group_discard(f'room_{self.room_id}', self.channel_name)
             room = await self.room_service.get_room(self.room_id)
             if room:
                 participant_count = await self.room_service.count_participants(room)
@@ -39,7 +41,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
                 if participant_count == 0:
                     logger.info(f"Room {self.room_id} is empty. Starting the deactivation task.")
-
                     deactivate_room_if_empty.apply_async((self.room_id,), countdown=15)
                     logger.info(f"The task of deactivating the room {self.room_id} added to the queue.")
 
@@ -81,6 +82,13 @@ class RoomConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+
+    async def participants_list(self, event):
+        participants = event['participants']
+        await self.send(text_data=json.dumps({
+            'type': 'participantsList',
+            'participants': participants
+        }))
 
     async def room_exists(self, room_id):
         return await self.room_service.get_room(room_id) is not None

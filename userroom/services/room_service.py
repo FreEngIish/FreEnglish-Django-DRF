@@ -92,3 +92,7 @@ class RoomService:
     def count_user_rooms(self, user):
         from userroom.models import UserRoom
         return UserRoom.objects.filter(creator=user, status='Active').count()
+
+    @database_sync_to_async
+    def get_room_participants(self, room):
+        return list(room.current_participants.all())
