@@ -2,16 +2,31 @@ import json
 
 import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework.decorators import api_view
 
 from .services import UserService
 
 
 user_service = UserService()
 
+@swagger_auto_schema(
+    method='get',
+    operation_description='Initiates the OAuth login process by redirecting the user to the Google authentication URL.',
+    responses={
+        302: openapi.Response(
+            description='Redirects to Google OAuth 2.0 login page.'
+        )
+    }
+)
+@api_view(['GET'])
 def login(request):  # noqa: ARG001
     """
     Initiates the OAuth 2.0 login process by redirecting the user to the Google
@@ -38,25 +53,39 @@ def login(request):  # noqa: ARG001
     )
     return redirect(google_auth_url)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description='Handles the callback from Google after user authentication.',
+    responses={
+        200: openapi.Response(
+            description='Returns user information and tokens.',
+            examples={
+                'application/json': {
+                    'email': 'user@example.com',
+                    'google_sub': '123456789',
+                    'access_token': 'new_access_token',
+                    'refresh_token': 'new_refresh_token',
+                    'avatar': 'https://example.com/avatar.jpg',
+                    'locale': 'en-US',
+                }
+            }
+        ),
+        400: openapi.Response(
+            description='Error message if the authorization code is missing or access token is missing.',
+            examples={
+                'application/json': {
+                    'error': 'Authorization code is missing'
+                }
+            }
+        )
+    }
+)
+@api_view(['GET'])
 def callback(request):
-    """
-    Handles the callback from Google's OAuth 2.0 server after the user
-    has authenticated. It exchanges the authorization code for access and
-    refresh tokens, retrieves user information, and either creates a new
-    user or retrieves an existing one.
-
-    Args:
-        request: The HTTP request object containing the authorization code.
-
-    Returns:
-        JsonResponse: Contains user information, access token, and refresh token
-        or an error message if the process fails.
-    """
-    code = request.GET.get('code')  # Get the authorization code
+    code = request.GET.get('code')
     if not code:
         return JsonResponse({'error': 'Authorization code is missing'}, status=400)
 
-    # Exchange the code for access_token and refresh_token
     token_response = requests.post(
         'https://oauth2.googleapis.com/token',
         data={
@@ -75,7 +104,6 @@ def callback(request):
     if not access_token:
         return JsonResponse({'error': 'Access token is missing'}, status=400)
 
-    # Request user information
     user_info_response = requests.get(
         'https://www.googleapis.com/oauth2/v1/userinfo',
         headers={'Authorization': f'Bearer {access_token}'}
@@ -83,23 +111,54 @@ def callback(request):
 
     user_info = user_info_response.json()
     email = user_info.get('email')
-    google_sub = user_info.get('id')  # Take google_sub
+    google_sub = user_info.get('id')
 
     # Save user to the database through the service
     user, created = user_service.get_or_create_user(google_sub, email, user_info)
 
     if created:
-        user.set_unusable_password()   # Set unusable password for users
+        user.set_unusable_password()  # Set unusable password for users
         user.save()
 
-    # Return user data
     return JsonResponse({
         'email': email,
         'google_sub': google_sub,
         'access_token': access_token,
-        'refresh_token': refresh_token
+        'refresh_token': refresh_token,
+        'avatar': user_info.get('picture', ''),
+        'locale': user_info.get('locale', ''),
     })
 
+
+@swagger_auto_schema(
+    method='post',
+    operation_description='Updates the access token using the refresh token.',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'refresh_token': openapi.Schema(type=openapi.TYPE_STRING, description='User refresh token.'),
+        },
+    ),
+    responses={
+        200: openapi.Response(
+            description='Returns a new access token.',
+            examples={
+                'application/json': {
+                    'access_token': 'new_access_token'
+                }
+            }
+        ),
+        400: openapi.Response(
+            description='Error with the refresh token.',
+            examples={
+                'application/json': {
+                    'error': 'Invalid refresh token'
+                }
+            }
+        )
+    }
+)
+@api_view(['POST'])
 @require_POST
 def refresh_access_token_view(request):
     """
@@ -184,3 +243,134 @@ def get_csrf_token(request):
         JsonResponse: Contains the CSRF token for the client to use.
     """
     return JsonResponse({'csrf_token': request.META.get('CSRF_COOKIE')})
+
+
+@swagger_auto_schema(
+    method='get',
+    operation_description='Gets information about the current user, including username and date_joined.',
+    responses={
+        200: openapi.Response(
+            description='User information',
+            examples={
+                'application/json': {
+                    'email': 'user123@example.com',
+                    'username': 'user123',
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'avatar': 'https://example.com/avatar.jpg',
+                    'locale': 'en-US',
+                    'date_joined': '2024-10-03 12:34:56'
+                }
+            }
+        )
+    }
+)
+@api_view(['GET'])
+@login_required
+def get_user_info(request):
+    """
+    Gets information about the current user, including username and date_joined.
+    The login_required decorator requires authentication to access this view.
+    """
+    user = request.user
+    return JsonResponse({
+        'email': user.email,
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'avatar': user.avatar,
+        'locale': user.locale,
+        'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+@swagger_auto_schema(
+    method='patch',
+    operation_description='Updates the current user information: avatar, locale, first_name, last_name.',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'avatar': openapi.Schema(type=openapi.TYPE_STRING, description='User avatar URL'),
+            'locale': openapi.Schema(type=openapi.TYPE_STRING, description='User locale'),
+            'first_name': openapi.Schema(type=openapi.TYPE_STRING, description='User first name'),
+            'last_name': openapi.Schema(type=openapi.TYPE_STRING, description='User last name')
+        }
+    ),
+    responses={
+        200: openapi.Response(
+            description='User updated successfully',
+            examples={
+                'application/json': {
+                    'message': 'User updated successfully',
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'avatar': 'https://example.com/avatar.jpg',
+                    'locale': 'en-US'
+                }
+            }
+        )
+    }
+)
+@api_view(['PATCH'])
+@csrf_exempt
+@login_required
+def update_user_info(request):
+    """
+    Updates the current user information: avatar, locale, first_name, last_name.
+    The update is done partially (PATCH).
+    """
+    if request.method == 'PATCH':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        user = request.user
+
+        if 'avatar' in data:
+            user.avatar = data['avatar']
+        if 'locale' in data:
+            user.locale = data['locale']
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+
+        user.save()
+
+        return JsonResponse({
+            'message': 'User updated successfully',
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'avatar': user.avatar,
+            'locale': user.locale
+        })
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+User = get_user_model()
+
+@swagger_auto_schema(
+    method='delete',
+    operation_description='Deletes the current user.',
+    responses={
+        200: openapi.Response(
+            description='User deleted successfully',
+            examples={
+                'application/json': {
+                    'message': 'User deleted successfully'
+                }
+            }
+        )
+    }
+)
+@api_view(['DELETE'])
+@csrf_exempt
+@login_required
+def delete_user(request):
+    """
+    Deletes the current user.
+    """
+    user = request.user
+    user.delete()
+    return JsonResponse({'message': 'User deleted successfully'})
