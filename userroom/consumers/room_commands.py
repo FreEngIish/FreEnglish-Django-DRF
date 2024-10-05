@@ -25,6 +25,7 @@ class RoomCommands:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'error',
                         'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'
+                        # noqa: E501
                     }))
                     return
                 else:
@@ -44,11 +45,12 @@ class RoomCommands:
                 await self.consumer.send(text_data=json.dumps({
                     'type': 'error',
                     'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'
+                    # noqa: E501
                 }))
                 return
 
             room = await self.room_service.get_room(room_id)
-            if room and room.status == 'Active':
+            if room:
                 current_count = await self.room_service.count_participants(room)
                 if current_count < room.participant_limit:
                     added = await self.room_service.add_participant(room, user)
@@ -74,7 +76,7 @@ class RoomCommands:
             else:
                 await self.consumer.send(text_data=json.dumps({
                     'type': 'error',
-                    'message': 'Room does not exist or is not active.'
+                    'message': 'Room does not exist.'
                 }))
         except Exception as e:
             logger.error(f'An error occurred while joining the room: {e}', exc_info=True)
@@ -82,7 +84,6 @@ class RoomCommands:
                 'type': 'error',
                 'message': 'Could not join room.'
             }))
-
 
     async def handle_leave_room(self, room_id, user):
         try:
