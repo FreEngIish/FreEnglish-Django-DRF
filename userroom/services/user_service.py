@@ -3,8 +3,8 @@ import logging
 import requests
 from channels.db import database_sync_to_async
 
-
 logger = logging.getLogger('freenglish')
+
 
 class UserService:
     @database_sync_to_async

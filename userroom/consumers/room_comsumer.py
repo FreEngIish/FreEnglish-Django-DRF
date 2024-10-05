@@ -6,9 +6,10 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from userroom.consumers.room_commands import RoomCommands
 from userroom.services.room_service import RoomService
 from userroom.services.user_service import UserService
-
+from userroom.tasks import deactivate_room_if_empty
 
 logger = logging.getLogger('freenglish')
+
 
 class RoomConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -31,6 +32,16 @@ class RoomConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):  # noqa: ARG002
         if self.room_id and self.user:
             await self.commands.handle_leave_room(self.room_id, self.user)
+            room = await self.room_service.get_room(self.room_id)
+            if room:
+                participant_count = await self.room_service.count_participants(room)
+                logger.info(f"In room {self.room_id} remaining participants: {participant_count}")
+
+                if participant_count == 0:
+                    logger.info(f"Room {self.room_id} is empty. Starting the deactivation task.")
+
+                    deactivate_room_if_empty.apply_async((self.room_id,), countdown=15)
+                    logger.info(f"The task of deactivating the room {self.room_id} added to the queue.")
 
     async def receive(self, text_data=None, bytes_data=None):
         if bytes_data is not None:
@@ -72,5 +83,4 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
 
     async def room_exists(self, room_id):
-        """Проверка существования комнаты в базе данных."""
         return await self.room_service.get_room(room_id) is not None

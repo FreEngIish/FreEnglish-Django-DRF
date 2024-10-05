@@ -3,9 +3,10 @@ import logging
 from typing import Any
 
 from userroom.services.room_service import RoomService
-
+from userroom.tasks import deactivate_empty_room_after_creation
 
 logger = logging.getLogger('freenglish')
+
 
 class MainCommands:
     def __init__(self, consumer):
@@ -17,7 +18,7 @@ class MainCommands:
             user_rooms_count = await self.room_service.count_user_rooms(user)
             if user_rooms_count >= 3:
                 await self.consumer.send(text_data=json.dumps({
-                    'type': 'error', 
+                    'type': 'error',
                     'message': 'You can only create up to 3 rooms.'
                 }))
                 return
@@ -38,6 +39,8 @@ class MainCommands:
                 participant_limit=participant_limit,
                 creator=user,
             )
+
+            deactivate_empty_room_after_creation.apply_async((room.room_id,), countdown=900)
 
             await self.consumer.channel_layer.group_send(
                 'rooms_group',

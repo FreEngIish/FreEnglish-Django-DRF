@@ -3,11 +3,12 @@ import logging
 
 from channels.db import database_sync_to_async
 from django.core.cache import cache
+from userroom.tasks import deactivate_room_if_empty
 
 from userroom.services.room_service import RoomService
 
-
 logger = logging.getLogger('freenglish')
+
 
 class RoomCommands:
     def __init__(self, consumer):
@@ -23,7 +24,8 @@ class RoomCommands:
                 if cached_room_id != room_id:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'error',
-                        'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'  # noqa: E501
+                        'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'
+                        # noqa: E501
                     }))
                     return
                 else:
@@ -42,7 +44,8 @@ class RoomCommands:
                 cache.set(cache_key, user_room.room_id, timeout=3600)
                 await self.consumer.send(text_data=json.dumps({
                     'type': 'error',
-                    'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'  # noqa: E501
+                    'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'
+                    # noqa: E501
                 }))
                 return
 
@@ -93,6 +96,13 @@ class RoomCommands:
                         'message': f'You have left the room "{room.room_name}".'
                     }))
                     logger.info(f'Participant {user.email} removed from RoomMembers for room {room.room_name}')
+
+                    participant_count = await self.room_service.count_participants(room)
+                    logger.info(f"In room {room_id} remaining participants: {participant_count}")
+
+                    if participant_count == 0:
+                        logger.info(f"Room {room_id} is empty. Starting the deactivation task.")
+                        deactivate_room_if_empty.apply_async((room_id,), countdown=15)
 
                     cache_key = f'user_room_{user.id}'
                     cache.delete(cache_key)
