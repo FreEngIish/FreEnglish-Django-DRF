@@ -40,7 +40,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 if participant_count == 0:
                     logger.info(f"Room {self.room_id} is empty. Starting the deactivation task.")
 
-                    deactivate_room_if_empty.apply_async((self.room_id,), countdown=900)
+                    deactivate_room_if_empty.apply_async((self.room_id,), countdown=15)
                     logger.info(f"The task of deactivating the room {self.room_id} added to the queue.")
 
     async def receive(self, text_data=None, bytes_data=None):

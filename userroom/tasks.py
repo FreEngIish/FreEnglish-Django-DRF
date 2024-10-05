@@ -23,3 +23,23 @@ def deactivate_room_if_empty(room_id):
             logger.info(f"Room {room.room_name} is still active. Participants have returned.")
     else:
         logger.warning(f"Room with ID {room_id} not found.")
+
+
+@shared_task
+def deactivate_empty_room_after_creation(room_id):
+    room_service = RoomService()
+
+    logger.info(f"A room check task has been started {room_id}, created 15 minutes ago.")
+
+    room = async_to_sync(room_service.get_room)(room_id)
+
+    if room:
+        # Проверяем, зашли ли участники в комнату
+        participant_count = async_to_sync(room_service.count_participants)(room)
+        if participant_count == 0:
+            async_to_sync(room_service.update_room_status)(room, 'Inactive')
+            logger.info(f"Room {room.room_name} was deactivated because no one had logged on in 15 minutes..")
+        else:
+            logger.info(f"Room {room.room_name} active. Participants entered.")
+    else:
+        logger.warning(f"Комната with ID {room_id} not found.")

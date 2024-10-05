@@ -102,7 +102,7 @@ class RoomCommands:
 
                     if participant_count == 0:
                         logger.info(f"Room {room_id} is empty. Starting the deactivation task.")
-                        deactivate_room_if_empty.apply_async((room_id,), countdown=900)
+                        deactivate_room_if_empty.apply_async((room_id,), countdown=15)
 
                     cache_key = f'user_room_{user.id}'
                     cache.delete(cache_key)
