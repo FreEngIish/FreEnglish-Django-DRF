@@ -91,4 +91,4 @@ class RoomService:
     @database_sync_to_async
     def count_user_rooms(self, user):
         from userroom.models import UserRoom
-        return UserRoom.objects.filter(creator=user).count()
+        return UserRoom.objects.filter(creator=user, status='Active').count()
