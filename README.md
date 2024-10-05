@@ -36,20 +36,24 @@
 ## Запуск проекта
 
 Чтобы запустить проект на локальном сервере, выполните команду:
-
 1.
-
 ```bash
-python manage.py runserver
+docker run --name redis -d -p 6379:6379 redis
 ```
 
 2.
 
 ```bash
-celery -A freenglish.celery_app worker --loglevel=info --pool=solo
+python manage.py runserver
 ```
 
 3.
+
+```bash
+celery -A freenglish.celery_app worker --loglevel=info --pool=solo
+```
+
+4.
 
 ```bash
 daphne -b 0.0.0.0 -p 8001 freenglish.asgi:application
