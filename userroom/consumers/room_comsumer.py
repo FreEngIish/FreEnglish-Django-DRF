@@ -32,6 +32,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):  # noqa: ARG002
         if self.room_id and self.user:
             await self.commands.handle_leave_room(self.room_id, self.user)
+            await self.channel_layer.group_discard(f'room_{self.room_id}', self.channel_name)
             room = await self.room_service.get_room(self.room_id)
             if room:
                 participant_count = await self.room_service.count_participants(room)
@@ -83,6 +84,13 @@ class RoomConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+
+    async def participants_list(self, event):
+        participants = event['participants']
+        await self.send(text_data=json.dumps({
+            'type': 'participantsList',
+            'participants': participants
+        }))
 
     async def handle_sdp(self, data, room_id):
         logger.info(f"Received SDP data: {data}")

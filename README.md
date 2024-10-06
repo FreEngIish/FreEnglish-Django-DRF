@@ -57,6 +57,6 @@ celery -A freenglish.celery_app worker --loglevel=info --pool=solo
 4.
 
 ```bash
-daphne -b 0.0.0.0 -p 8001 freenglish.asgi:application
+daphne -b 0.0.0.0 -p 8001 asgi:application
 ```
 
