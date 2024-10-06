@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn --workers 3 --bind 0.0.0.0:8000 freenglish.wsgi:application"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+    env_file: .env.prod
+    depends_on:
+      - db
+      - redis
+      - celery
+      - daphne
+
+  celery:
+    build: .
+    command: celery -A freenglish.celery_app worker --loglevel=info --pool=solo
+    volumes:
+      - .:/app
+    env_file: .env.prod
+    depends_on:
+      - redis
+
+  daphne:
+    build: .
+    command: daphne -b 0.0.0.0 -p 8001 asgi:application
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=your_db_name
+      - POSTGRES_USER=your_db_user
+      - POSTGRES_PASSWORD=your_db_password
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:

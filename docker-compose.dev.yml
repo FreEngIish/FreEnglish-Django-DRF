@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+    env_file: .env.dev
+    depends_on:
+      - redis
+      - celery
+      - daphne
+
+  celery:
+    build: .
+    command: celery -A freenglish.celery_app worker --loglevel=info --pool=solo
+    volumes:
+      - .:/app
+    env_file: .env.dev
+    depends_on:
+      - redis
+
+  daphne:
+    build: .
+    command: daphne -b 0.0.0.0 -p 8001 asgi:application
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    env_file: .env.dev
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    env_file: .env.dev

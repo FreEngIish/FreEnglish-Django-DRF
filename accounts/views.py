@@ -39,7 +39,7 @@ def login(request):  # noqa: ARG001
         '&prompt=consent'  # Important for re-requesting the refresh token
     ).format(
         client_id=settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
-        redirect_uri='http://localhost:8000/accounts/complete/google-oauth2/'
+        redirect_uri=f'{settings.DEPLOY_URL_ONLY_FOR_GITHUB}/accounts/complete/google-oauth2/'
     )
     return redirect(google_auth_url)
 
@@ -55,7 +55,7 @@ def callback(request):
             'code': code,
             'client_id': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
             'client_secret': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
-            'redirect_uri': 'http://localhost:8000/accounts/complete/google-oauth2/',
+            'redirect_uri': f'{settings.DEPLOY_URL_ONLY_FOR_GITHUB}/accounts/complete/google-oauth2/',
             'grant_type': 'authorization_code'
         }
     )
