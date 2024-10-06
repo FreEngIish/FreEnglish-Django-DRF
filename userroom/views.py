@@ -11,12 +11,12 @@ from drf_yasg import openapi
 
 class UserRoomListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
-
+    @swagger_auto_schema(auto_schema=None)
     def get(self, request):
         rooms = UserRoom.objects.all()
         serializer = UserRoomSerializer(rooms, many=True)
         return Response(serializer.data)
-
+    @swagger_auto_schema(auto_schema=None)
     def post(self, request):
         serializer = UserRoomSerializer(data=request.data)
         if serializer.is_valid():
@@ -28,20 +28,13 @@ class UserRoomListCreateAPIView(APIView):
 class UserRoomDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
-        operation_description="Retrieve a room by ID",
-        responses={200: UserRoomSerializer, 404: 'Not Found'}
-    )
+    @swagger_auto_schema(auto_schema=None)
     def get(self, request, pk):
         room = get_object_or_404(UserRoom, pk=pk)
         serializer = UserRoomSerializer(room)
         return Response(serializer.data)
 
-    @swagger_auto_schema(
-        operation_description="Update a room by ID",
-        request_body=UserRoomSerializer,
-        responses={200: UserRoomSerializer, 400: 'Bad Request'}
-    )
+    @swagger_auto_schema(auto_schema=None)
     def put(self, request, pk):
         room = get_object_or_404(UserRoom, pk=pk)
         serializer = UserRoomSerializer(room, data=request.data)
@@ -50,10 +43,7 @@ class UserRoomDetailAPIView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(
-        operation_description="Delete a room by ID",
-        responses={204: 'No Content', 404: 'Not Found'}
-    )
+    @swagger_auto_schema(auto_schema=None)
     def delete(self, request, pk):
         room = get_object_or_404(UserRoom, pk=pk)
         room.delete()

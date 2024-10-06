@@ -34,6 +34,7 @@ services:
       - .:/app
     ports:
       - "8001:8001"
+    env_file: .env.dev
     depends_on:
       - redis
 
@@ -41,3 +42,4 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
+    env_file: .env.dev
