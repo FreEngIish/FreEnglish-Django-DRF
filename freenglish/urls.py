@@ -16,7 +16,7 @@ schema_view = get_schema_view(
    ),
    public=True,
    permission_classes=(permissions.AllowAny,),
-   url=f'{settings.DEPLOY_URL_ONLY_FOR_GITHUB}'
+   url=f'{settings.DEPLOY_URL_FOR_SWAGGER}'
 )
 
 urlpatterns = [
