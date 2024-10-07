@@ -2,6 +2,7 @@ import logging
 
 from channels.db import database_sync_to_async
 
+
 logger = logging.getLogger('freenglish')
 
 
@@ -22,7 +23,7 @@ class RoomService:
         return room
 
     @database_sync_to_async
-    def update_room(self, room, room_name=None, native_language=None, language_level=None, participant_limit=None, description=None):
+    def update_room(self, room, room_name=None, native_language=None, language_level=None, participant_limit=None, description=None):  # noqa: E501
         if room_name is not None:
             room.room_name = room_name
         if native_language is not None:
@@ -89,7 +90,7 @@ class RoomService:
     @database_sync_to_async
     def get_all_rooms(self):
         from userroom.models import UserRoom
-        return UserRoom.objects.all().order_by('-creation_date')
+        return UserRoom.objects.all().order_by('-creation_date').filter(status='Active')
 
     @database_sync_to_async
     def count_user_rooms(self, user):
