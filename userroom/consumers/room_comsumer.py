@@ -2,10 +2,12 @@ import json
 import logging
 
 from channels.generic.websocket import AsyncWebsocketConsumer
+
 from userroom.consumers.room_commands import RoomCommands
 from userroom.services.room_service import RoomService
 from userroom.services.user_service import UserService
 from userroom.tasks import deactivate_room_if_empty
+
 
 logger = logging.getLogger('freenglish')
 
@@ -36,15 +38,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
             room = await self.room_service.get_room(self.room_id)
             if room:
                 participant_count = await self.room_service.count_participants(room)
-                logger.info(f"In room {self.room_id} remaining participants: {participant_count}")
+                logger.info(f'In room {self.room_id} remaining participants: {participant_count}')
 
                 if participant_count == 0:
-                    logger.info(f"Room {self.room_id} is empty. Starting the deactivation task.")
+                    logger.info(f'Room {self.room_id} is empty. Starting the deactivation task.')
                     deactivate_room_if_empty.apply_async((self.room_id,), countdown=900)
-                    logger.info(f"The task of deactivating the room {self.room_id} added to the queue.")
+                    logger.info(f'The task of deactivating the room {self.room_id} added to the queue.')
         await self.channel_layer.group_discard(f'room_{self.room_id}', self.channel_name)
 
-    async def receive(self, text_data=None, bytes_data=None):
+    async def receive(self, text_data=None, bytes_data=None):  # noqa: ARG002
         if text_data is not None:
             try:
                 text_data_json = json.loads(text_data)
@@ -71,6 +73,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     await self.commands.handle_leave_room(self.room_id, user=self.user)
                 elif message_type == 'editRoom':
                     await self.commands.handle_edit_room(self.room_id, user=self.user, data=data)
+                elif message_type == 'sendMessage':
+                    await self.handle_send_message(data)
                 elif message_type == 'sdp':
                     await self.handle_sdp(data, self.room_id)
                 elif message_type == 'ice_candidate':
@@ -84,6 +88,30 @@ class RoomConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+
+    async def handle_send_message(self, data):
+        message = data.get('message')
+        if message:
+            await self.channel_layer.group_send(
+                f'room_{self.room_id}',
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'username': self.user.username
+                }
+            )
+        else:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Message content is missing.'
+            }))
+
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'chatMessage',
+            'message': event['message'],
+            'username': event['username']
+        }))
 
     async def participants_list(self, event):
         participants = event['participants']
@@ -107,7 +135,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         }))
 
     async def handle_sdp(self, data, room_id):
-        logger.info(f"Received SDP data: {data}")
+        logger.info(f'Received SDP data: {data}')
 
         if 'sdp' in data:
             await self.channel_layer.group_send(
@@ -119,7 +147,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 }
             )
         else:
-            logger.error(f"SDP data missing in: {data}")
+            logger.error(f'SDP data missing in: {data}')
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'SDP data missing'}))
 
     async def sdp(self, event):
@@ -140,7 +168,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 }
             )
         else:
-            logger.error(f"ICE candidate data missing in: {data}")
+            logger.error(f'ICE candidate data missing in: {data}')
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'ICE candidate data missing'}))
 
     async def ice_candidate(self, event):
