@@ -17,6 +17,8 @@ services:
       - redis
       - celery
       - daphne
+    networks:
+      - app-network
 
   celery:
     build: .
@@ -26,6 +28,8 @@ services:
     env_file: .env.dev
     depends_on:
       - redis
+    networks:
+      - app-network
 
   daphne:
     build: .
@@ -37,9 +41,17 @@ services:
     env_file: .env.dev
     depends_on:
       - redis
+    networks:
+      - app-network
 
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
     env_file: .env.dev
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
