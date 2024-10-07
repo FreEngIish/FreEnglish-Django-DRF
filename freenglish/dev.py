@@ -4,7 +4,6 @@ from rest_framework import permissions
 
 DEPLOY_URL = config('DEPLOY_URL', default='symmetrical-computing-machine-5rpjw5rrgv4247x4.github.dev')
 DEPLOY_URL_ONLY_FOR_GITHUB = config('DEPLOY_URL_ONLY_FOR_GITHUB', default='https://symmetrical-computing-machine-5rpjw5rrgv4247x4-8000.app.github.dev')
-DEPLOY_URL_FOR_SWAGGER = config('DEPLOY_URL_FOR_SWAGGER', default='https://symmetrical-computing-machine-5rpjw5rrgv4247x4-8000.app.github.dev')
 
 DEBUG = config('DEBUG', default='True', cast=bool)
 
