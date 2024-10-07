@@ -5,7 +5,6 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from django.conf import settings
 
-
 schema_view = get_schema_view(
    openapi.Info(
       title='UserRoom API Documentation',
@@ -17,6 +16,7 @@ schema_view = get_schema_view(
    ),
    public=True,
    permission_classes=(permissions.AllowAny,),
+   url=f'{settings.DEPLOY_URL_ONLY_FOR_GITHUB}'
 )
 
 urlpatterns = [
