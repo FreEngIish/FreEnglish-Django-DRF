@@ -4,15 +4,14 @@ import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
+
 from .services import UserService
 
 user_service = UserService()
@@ -83,54 +82,79 @@ def callback(request):
     if created:
         user.set_unusable_password()  # Set unusable password for users
         user.save()
-    
-    response = JsonResponse({
-        'status': 'succsseful'
+
+    return JsonResponse({
+        'email': email,
+        'google_sub': google_sub,
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'avatar': user_info.get('picture', ''),
+        'locale': user_info.get('locale', ''),
     })
 
-    response.set_cookie('access_token', access_token, httponly=True, secure=True, samesite='Lax')
-    response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, samesite='Lax')
-    # response = HttpResponseRedirect('/')
-    return response
+csrf_header = openapi.Parameter(
+    'X-CSRFToken',  # Название заголовка
+    openapi.IN_HEADER,  # Заголовок запроса
+    description="CSRF token",  # Описание заголовка
+    type=openapi.TYPE_STRING  # Тип данных
+)
 
-
-
-@api_view(['POST'])
-def refresh_access_token_view(request):
-    try:
-        # Используем request.data для получения данных запроса
-        refresh_token = request.data.get('refresh_token')
-
-        if not refresh_token:
-            return Response({'error': 'Refresh token is missing'}, status=status.HTTP_400_BAD_REQUEST)
-
-        token_response = requests.post(
-            'https://oauth2.googleapis.com/token',
-            data={
-                'client_id': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
-                'client_secret': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
-                'refresh_token': refresh_token,
-                'grant_type': 'refresh_token'
+@swagger_auto_schema(
+    method='post',
+    operation_description='Updates the access token using the refresh token.',
+    manual_parameters=[csrf_header],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'refresh_token': openapi.Schema(type=openapi.TYPE_STRING, description='User refresh token.'),
+        },
+    ),
+    responses={
+        200: openapi.Response(
+            description='Returns a new access token.',
+            examples={
+                'application/json': {
+                    'access_token': 'new_access_token'
+                }
+            }
+        ),
+        400: openapi.Response(
+            description='Error with the refresh token.',
+            examples={
+                'application/json': {
+                    'error': 'Invalid refresh token'
+                }
             }
         )
+    }
+)
+@api_view(['POST'])
+@require_POST
+def refresh_access_token_view(request):
+    """
+    Endpoint to refresh the access token using the provided refresh token.
+    It parses the incoming request, verifies the refresh token, and returns
+    a new access token and its expiration time.
 
-        if token_response.status_code != 200:
-            return Response({'error': 'Failed to refresh access token'}, status=token_response.status_code)
+    Args:
+        request: The HTTP request object containing the refresh token in JSON format.
 
-        token_data = token_response.json()
-        access_token = token_data.get('access_token')
+    Returns:
+        JsonResponse: Contains the new access token and its expiration time or an
+        error message if the refresh token is invalid or missing.
+    """
+    refresh_token = request.data.get('refresh_token')  # Get the refresh_token
+    if not refresh_token:
+        return JsonResponse({'error': 'Refresh token is missing'}, status=400)
 
-        if not access_token:
-            return Response({'error': 'Access token is missing'}, status=status.HTTP_400_BAD_REQUEST)
+    response = refresh_access_token(refresh_token)
+    if 'error' in response:
+        return JsonResponse({'error': response['error']}, status=400)
 
-        response = Response({'access_token': access_token})
-        # Устанавливаем новый токен в куки
-        response.set_cookie('access_token', access_token, httponly=True, secure=True, samesite='Lax')
-
-        return response
-
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return JsonResponse({
+        'access_token': response.get('access_token'),
+        'expires_in': response.get('expires_in')
+    })
 
 
 def refresh_access_token(refresh_token):
@@ -231,6 +255,7 @@ def get_user_info(request):
 @swagger_auto_schema(
     method='patch',
     operation_description='Updates the current user information: avatar, locale, first_name, last_name.',
+    manual_parameters=[csrf_header],
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
