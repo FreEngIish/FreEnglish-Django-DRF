@@ -11,7 +11,7 @@ urlpatterns = [
     path('login/google/', views.login, name='google_login'),
 
     # Callback route to handle the response from Google after authentication
-    path('complete/google-oauth2/', views.callback, name='callback'),
+    path('complete/google-oauth/', views.callback, name='callback'),
 
     # Protected route for test access token valid. This is temporary.
     path('protected/', views.protected_view, name='protected'),

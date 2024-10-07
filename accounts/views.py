@@ -11,12 +11,18 @@ from django.views.decorators.http import require_GET, require_POST
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view
-
+from rest_framework.decorators import permission_classes 
 from .services import UserService
+from rest_framework.permissions import AllowAny
 
 user_service = UserService()
-
-
+@swagger_auto_schema(
+    method='get',
+    operation_description="Redirects the user to the Google OAuth 2.0 login page.",
+    responses={302: 'Redirect to Google OAuth 2.0'}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def login(request):  # noqa: ARG001
     """
     Initiates the OAuth 2.0 login process by redirecting the user to the Google
@@ -41,9 +47,18 @@ def login(request):  # noqa: ARG001
         client_id=settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
         redirect_uri=f'{settings.DEPLOY_URL_ONLY_FOR_GITHUB}/accounts/complete/google-oauth2/'
     )
-    return redirect(google_auth_url)
+    return JsonResponse({'redirect_url': google_auth_url}) 
 
-
+@swagger_auto_schema(
+    method='get',
+    operation_description="Redirects the user to the Google OAuth 2.0 login page.",
+    manual_parameters=[
+        openapi.Parameter('code', openapi.IN_QUERY, description="Authorization code from Google", type=openapi.TYPE_STRING)
+    ],
+    responses={302: 'Redirect to Google OAuth 2.0'}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def callback(request):
     code = request.GET.get('code')
     if not code:
@@ -91,6 +106,15 @@ def callback(request):
         'avatar': user_info.get('picture', ''),
         'locale': user_info.get('locale', ''),
     })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Разрешить доступ всем
+def get_code(request):
+    code = request.GET.get('code')  # Извлекаем параметр code из URL
+    if code:
+        return JsonResponse({'code': code})  # Возвращаем код в формате JSON
+    else:
+        return JsonResponse({'error': 'Code parameter is missing'}, status=400)
 
 csrf_header = openapi.Parameter(
     'X-CSRFToken',  # Название заголовка
