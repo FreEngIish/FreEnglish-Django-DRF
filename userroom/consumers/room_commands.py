@@ -138,13 +138,15 @@ class RoomCommands:
                     native_language = data.get('native_language')
                     language_level = data.get('language_level')
                     participant_limit = data.get('participant_limit')
+                    description = data.get('description')
 
                     await self.room_service.update_room(
                         room,
                         room_name=room_name,
                         native_language=native_language,
                         language_level=language_level,
-                        participant_limit=participant_limit
+                        participant_limit=participant_limit,
+                        description=description
                     )
 
                     await self.consumer.send(text_data=json.dumps({

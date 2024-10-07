@@ -7,7 +7,7 @@ logger = logging.getLogger('freenglish')
 
 class RoomService:
     @database_sync_to_async
-    def create_room(self, room_name, native_language, language_level, participant_limit, creator):
+    def create_room(self, room_name, native_language, language_level, participant_limit, creator, description=''):
         from userroom.models import UserRoom
 
         room = UserRoom(
@@ -16,12 +16,13 @@ class RoomService:
             language_level=language_level,
             participant_limit=participant_limit,
             creator=creator,
+            description=description,
         )
         room.save()
         return room
 
     @database_sync_to_async
-    def update_room(self, room, room_name=None, native_language=None, language_level=None, participant_limit=None):
+    def update_room(self, room, room_name=None, native_language=None, language_level=None, participant_limit=None, description=None):
         if room_name is not None:
             room.room_name = room_name
         if native_language is not None:
@@ -30,6 +31,8 @@ class RoomService:
             room.language_level = language_level
         if participant_limit is not None:
             room.participant_limit = participant_limit
+        if description is not None:
+            room.description = description
         room.save()
         return room
 

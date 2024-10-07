@@ -9,5 +9,5 @@ class UserRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRoom
         fields = ['room_id', 'room_name', 'native_language', 'language_level', 'participant_limit',
-                  'current_participants', 'status', 'creator']
+                  'current_participants', 'status', 'creator', 'description']
         read_only_fields = ['room_id', 'current_participants', 'status', 'creator']
