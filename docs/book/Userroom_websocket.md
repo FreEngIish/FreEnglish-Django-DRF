@@ -40,7 +40,8 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
     "room_name": "English Practice",
     "native_language": "English",
     "language_level": "Intermediate",
-    "participant_limit": 10
+    "participant_limit": 10,
+    "description": "description"
   }
 }
 ```
@@ -97,7 +98,8 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
     "room_name": "Advanced English",
     "native_language": "English",
     "language_level": "Advanced",
-    "participant_limit": 5
+    "participant_limit": 5,
+    "description": "description"
   }
 }
 ```
