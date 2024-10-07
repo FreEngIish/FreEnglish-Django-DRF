@@ -3,9 +3,10 @@ import logging
 
 from channels.db import database_sync_to_async
 from django.core.cache import cache
-from userroom.tasks import deactivate_room_if_empty
 
 from userroom.services.room_service import RoomService
+from userroom.tasks import deactivate_room_if_empty
+
 
 logger = logging.getLogger('freenglish')
 
@@ -24,7 +25,7 @@ class RoomCommands:
                 if cached_room_id != room_id:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'error',
-                        'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'
+                        'message': f'You are already in another room with ID {cached_room_id}. You can only join one room at a time.'  # noqa: E501
                     }))
                     return
                 else:
@@ -43,7 +44,7 @@ class RoomCommands:
                 cache.set(cache_key, user_room.room_id, timeout=3600)
                 await self.consumer.send(text_data=json.dumps({
                     'type': 'error',
-                    'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'
+                    'message': f'You are already in another room with ID {user_room.room_id}. You can only join one room at a time.'  # noqa: E501
                 }))
                 return
 
@@ -60,7 +61,7 @@ class RoomCommands:
                             'message': f'You have successfully joined the room "{room.room_name}".'
                         }))
                         logger.info(f'Participant {user.email} added to RoomMembers for room {room.room_name}')
-                        
+
                         await self.consumer.channel_layer.group_send(
                             f'room_{room_id}',
                             {
@@ -107,17 +108,17 @@ class RoomCommands:
                     logger.info(f'Participant {user.email} removed from RoomMembers for room {room.room_name}')
 
                     participant_count = await self.room_service.count_participants(room)
-                    logger.info(f"In room {room_id} remaining participants: {participant_count}")
+                    logger.info(f'In room {room_id} remaining participants: {participant_count}')
 
                     if participant_count == 0:
-                        logger.info(f"Room {room_id} is empty. Starting the deactivation task.")
+                        logger.info(f'Room {room_id} is empty. Starting the deactivation task.')
                         deactivate_room_if_empty.apply_async((room_id,), countdown=900)
 
                     cache_key = f'user_room_{user.id}'
                     cache.delete(cache_key)
 
                     await self.send_participants_list(room_id)
-                    
+
                     await self.consumer.channel_layer.group_send(
                         f'room_{room_id}',
                         {
@@ -197,7 +198,7 @@ class RoomCommands:
         room = await self.room_service.get_room(room_id)
         if room:
             participants = await self.room_service.get_room_participants(room)
-            participants_data = [{"id": participant.id, "username": participant.username} for participant in
+            participants_data = [{'id': participant.id, 'username': participant.username} for participant in
                                  participants]
             logger.info(f'Sending participants list for room_{room_id}: {participants_data}')
             await self.consumer.channel_layer.group_send(

@@ -5,6 +5,7 @@ from typing import Any
 from userroom.services.room_service import RoomService
 from userroom.tasks import deactivate_empty_room_after_creation
 
+
 logger = logging.getLogger('freenglish')
 
 
@@ -27,7 +28,7 @@ class MainCommands:
             native_language = data.get('native_language')
             language_level = data.get('language_level', 'Beginner')
             participant_limit = data.get('participant_limit', 10)
-            description = data.get('description', '') 
+            description = data.get('description', '')
 
             if not room_name or not native_language or not language_level:
                 await self.consumer.send(text_data=json.dumps({'type': 'error', 'message': 'Missing required fields'}))
