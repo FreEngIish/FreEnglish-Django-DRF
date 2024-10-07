@@ -29,19 +29,3 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     DEPLOY_URL_ONLY_FOR_GITHUB
 ]
-
-SWAGGER_SETTINGS = {
-    'DEFAULT_INFO': 'my_project.urls.swagger_info',
-    'USE_SESSION_AUTH': True,
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header',
-        },
-    },
-    'DEFAULT_AUTO_SCHEMA_CLASS': 'drf_yasg.inspectors.SwaggerAutoSchema',
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_PERMISSIONS': [permissions.AllowAny],
-}
