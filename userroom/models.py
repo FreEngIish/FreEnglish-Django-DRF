@@ -51,6 +51,7 @@ class UserRoom(models.Model):
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_rooms', on_delete=models.CASCADE)
     native_language = models.CharField(max_length=10)
     language_level = models.CharField(max_length=12, choices=LANGUAGE_LEVEL_CHOICES, default='Beginner')
+    description = models.CharField(max_length=2000, blank=True)
     participant_limit = models.IntegerField(default=10)
     current_participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='participant_rooms',
                                                   blank=True)

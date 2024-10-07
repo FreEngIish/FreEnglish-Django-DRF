@@ -27,6 +27,7 @@ class MainCommands:
             native_language = data.get('native_language')
             language_level = data.get('language_level', 'Beginner')
             participant_limit = data.get('participant_limit', 10)
+            description = data.get('description', '') 
 
             if not room_name or not native_language or not language_level:
                 await self.consumer.send(text_data=json.dumps({'type': 'error', 'message': 'Missing required fields'}))
@@ -38,6 +39,7 @@ class MainCommands:
                 language_level=language_level,
                 participant_limit=participant_limit,
                 creator=user,
+                description=description,
             )
 
             deactivate_empty_room_after_creation.apply_async((room.room_id,), countdown=900)

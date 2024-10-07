@@ -60,6 +60,14 @@ class RoomCommands:
                             'message': f'You have successfully joined the room "{room.room_name}".'
                         }))
                         logger.info(f'Participant {user.email} added to RoomMembers for room {room.room_name}')
+                        
+                        await self.consumer.channel_layer.group_send(
+                            f'room_{room_id}',
+                            {
+                                'type': 'user_joined',
+                                'username': user.username
+                            }
+                        )
 
                         await self.send_participants_list(room_id)
 
@@ -109,7 +117,14 @@ class RoomCommands:
                     cache.delete(cache_key)
 
                     await self.send_participants_list(room_id)
-
+                    
+                    await self.consumer.channel_layer.group_send(
+                        f'room_{room_id}',
+                        {
+                            'type': 'user_left',
+                            'username': user.username
+                        }
+                    )
                 else:
                     await self.consumer.send(text_data=json.dumps({
                         'type': 'info',
@@ -138,13 +153,15 @@ class RoomCommands:
                     native_language = data.get('native_language')
                     language_level = data.get('language_level')
                     participant_limit = data.get('participant_limit')
+                    description = data.get('description')
 
                     await self.room_service.update_room(
                         room,
                         room_name=room_name,
                         native_language=native_language,
                         language_level=language_level,
-                        participant_limit=participant_limit
+                        participant_limit=participant_limit,
+                        description=description
                     )
 
                     await self.consumer.send(text_data=json.dumps({

@@ -92,6 +92,20 @@ class RoomConsumer(AsyncWebsocketConsumer):
             'participants': participants
         }))
 
+    async def user_joined(self, event):
+        username = event['username']
+        await self.send(text_data=json.dumps({
+            'type': 'userJoined',
+            'message': f'{username} has joined the room.'
+        }))
+
+    async def user_left(self, event):
+        username = event['username']
+        await self.send(text_data=json.dumps({
+            'type': 'userLeft',
+            'message': f'{username} has left the room.'
+        }))
+
     async def handle_sdp(self, data, room_id):
         logger.info(f"Received SDP data: {data}")
 
