@@ -113,3 +113,7 @@ class RoomService:
     @database_sync_to_async
     def get_room_participants(self, room):
         return list(room.current_participants.all())
+    @database_sync_to_async
+    def search_rooms_by_name(self, search_query):
+        from userroom.models import UserRoom
+        return UserRoom.objects.filter(room_name__icontains=search_query, status='Active').order_by('-creation_date')

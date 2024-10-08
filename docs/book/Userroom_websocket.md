@@ -9,6 +9,7 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 - [Class: RoomCommands](#class-roomcommands)
   - [Method: `handle_create_room`](#method-handle_create_room)
   - [Method: `handle_filter_rooms`](#method-handle_filter_rooms) 
+  - [Method: `handle_search_rooms`](#method-handle_search_rooms)  
   - [Method: `handle_join_room`](#method-handle_join_room)
   - [Method: `handle_leave_room`](#method-handle_leave_room)
   - [Method: `handle_edit_room`](#method-handle_edit_room)
@@ -73,6 +74,47 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
   }
 }
 ```
+
+---
+
+## Method: `handle_search_rooms`
+
+### Parameters:
+- `search_query`: A string containing the name or part of the name of the room to search.
+
+### Logic:
+- Calls the `RoomService` to retrieve rooms that match the search query.
+- Sends the filtered list of rooms back to the client, or sends an error message if something goes wrong.
+
+### WebSocket Message:
+```json
+{
+  "token": "JWT_Token",
+  "type": "searchRoom",
+  "data": {
+    "query": "English"
+  }
+}
+```
+
+### Response Message:
+```json
+{
+  "type": "searchResults",
+  "rooms": [
+    {
+      "room_id": 1,
+      "room_name": "English Practice",
+      "native_language": "English",
+      "language_level": "Beginner",
+      "participant_limit": 10,
+      "description": "Basic English practice"
+    },
+    ...
+  ]
+}
+```
+
 # Commands for /ws/rooms/<id_room>/
 
 ---

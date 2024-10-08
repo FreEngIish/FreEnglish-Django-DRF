@@ -50,7 +50,9 @@ class MainConsumer(AsyncWebsocketConsumer):
                     max_participants = data.get('max_participants')
 
                     await self.handle_filter_rooms(language_level, min_participants, max_participants)
-
+                elif message_type == 'searchRoom':
+                    search_query = data.get('query', '')
+                    await self.handle_search_rooms(search_query)
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 
@@ -60,6 +62,16 @@ class MainConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+
+    async def handle_search_rooms(self, search_query):
+        try:
+            rooms = await self.room_service.search_rooms_by_name(search_query)
+            rooms_data = await self.room_service.serialize_rooms_data(rooms)
+
+            await self.send(text_data=json.dumps({'type': 'searchResults', 'rooms': rooms_data}))
+        except Exception as e:
+            logger.error(f'An error occurred while searching for rooms: {e}', exc_info=True)
+            await self.send(text_data=json.dumps({'type': 'error', 'message': 'Could not search for rooms.'}))
 
     async def room_created(self, event):
         room_data = event['room']
