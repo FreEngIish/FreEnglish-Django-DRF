@@ -8,11 +8,13 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
 
 - [Class: RoomCommands](#class-roomcommands)
   - [Method: `handle_create_room`](#method-handle_create_room)
+  - [Method: `handle_filter_rooms`](#method-handle_filter_rooms) 
   - [Method: `handle_join_room`](#method-handle_join_room)
   - [Method: `handle_leave_room`](#method-handle_leave_room)
   - [Method: `handle_edit_room`](#method-handle_edit_room)
 
 ---
+# Commands for /ws/main/
 
 ## Class: RoomCommands
 
@@ -45,6 +47,33 @@ The `RoomCommands` class handles WebSocket commands for managing rooms. It allow
   }
 }
 ```
+
+---
+
+## Method: `handle_filter_rooms`
+
+### Parameters:
+- `language_level` (optional): The desired language level for filtering.
+- `min_participants` (optional): The minimum number of participants in the room.
+- `max_participants` (optional): The maximum number of participants in the room.
+
+### Logic:
+- Filters the list of rooms based on the provided criteria (`language_level`, `min_participants`, and `max_participants`).
+- Calls the `RoomService` to fetch the filtered list of rooms.
+- Sends the filtered list of rooms back to the client.
+
+### WebSocket Message:
+```json
+{
+  "type": "filterRooms",
+  "data": {
+    "language_level": "Intermediate",
+    "min_participants": 0,
+    "max_participants": 10
+  }
+}
+```
+# Commands for /ws/rooms/<id_room>/
 
 ---
 

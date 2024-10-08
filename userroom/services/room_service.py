@@ -1,6 +1,7 @@
 import logging
 
 from channels.db import database_sync_to_async
+from django.db.models import Count
 
 
 logger = logging.getLogger('freenglish')
@@ -88,9 +89,21 @@ class RoomService:
         return room_member.room if room_member else None
 
     @database_sync_to_async
-    def get_all_rooms(self):
+    def get_all_rooms(self, language_level=None, min_participants=None, max_participants=None):
         from userroom.models import UserRoom
-        return UserRoom.objects.all().order_by('-creation_date').filter(status='Active')
+
+        rooms_query = UserRoom.objects.filter(status='Active')
+
+        if language_level:
+            rooms_query = rooms_query.filter(language_level=language_level)
+
+        if min_participants is not None:
+            rooms_query = rooms_query.annotate(participant_count=Count('current_participants')).filter(participant_count__gte=min_participants)  # noqa: E501
+
+        if max_participants is not None:
+            rooms_query = rooms_query.annotate(participant_count=Count('current_participants')).filter(participant_count__lte=max_participants)  # noqa: E501
+
+        return rooms_query.order_by('-creation_date')
 
     @database_sync_to_async
     def count_user_rooms(self, user):
