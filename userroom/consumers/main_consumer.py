@@ -44,6 +44,15 @@ class MainConsumer(AsyncWebsocketConsumer):
 
                 if message_type == 'createRoom':
                     await self.commands.handle_create_room(data, user=self.user)
+                elif message_type == 'filterRooms':
+                    language_level = data.get('language_level')
+                    min_participants = data.get('min_participants')
+                    max_participants = data.get('max_participants')
+
+                    await self.handle_filter_rooms(language_level, min_participants, max_participants)
+                elif message_type == 'searchRoom':
+                    search_query = data.get('query', '')
+                    await self.handle_search_rooms(search_query)
                 else:
                     await self.send(text_data=json.dumps({'type': 'error', 'message': 'Unknown message type'}))
 
@@ -53,6 +62,16 @@ class MainConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.error('Error processing message: %s', str(e))
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'An unexpected error occurred'}))
+
+    async def handle_search_rooms(self, search_query):
+        try:
+            rooms = await self.room_service.search_rooms_by_name(search_query)
+            rooms_data = await self.room_service.serialize_rooms_data(rooms)
+
+            await self.send(text_data=json.dumps({'type': 'searchResults', 'rooms': rooms_data}))
+        except Exception as e:
+            logger.error(f'An error occurred while searching for rooms: {e}', exc_info=True)
+            await self.send(text_data=json.dumps({'type': 'error', 'message': 'Could not search for rooms.'}))
 
     async def room_created(self, event):
         room_data = event['room']
@@ -67,5 +86,21 @@ class MainConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f'An error occurred while fetching all rooms: {e}', exc_info=True)
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'Could not retrieve rooms.'}))
+
+    async def handle_filter_rooms(self, language_level=None, min_participants=None, max_participants=None):
+        try:
+            rooms = await self.room_service.get_all_rooms(
+                language_level=language_level,
+                min_participants=min_participants,
+                max_participants=max_participants
+            )
+            rooms_data = await self.room_service.serialize_rooms_data(rooms)
+
+            await self.send(text_data=json.dumps({'type': 'filteredRooms', 'rooms': rooms_data}))
+        except Exception as e:
+            logger.error(f'An error occurred while filtering rooms: {e}', exc_info=True)
+            await self.send(text_data=json.dumps({'type': 'error', 'message': 'Could not filter rooms.'}))
+
+
     async def get_all_rooms(self, event):  # noqa: ARG002
         await self.handle_get_all_rooms()
