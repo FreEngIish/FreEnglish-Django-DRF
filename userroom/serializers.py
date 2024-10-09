@@ -1,10 +1,19 @@
 from rest_framework import serializers
+
+from accounts.models import User
+
 from .models import UserRoom
 
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'avatar']
 
 class UserRoomSerializer(serializers.ModelSerializer):
     creator = serializers.ReadOnlyField(source='creator.id')
     room_id = serializers.UUIDField(read_only=True)
+    current_participants = UserSerializer(many=True)
 
     class Meta:
         model = UserRoom

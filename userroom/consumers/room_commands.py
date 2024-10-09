@@ -71,7 +71,12 @@ class RoomCommands:
                         )
 
                         await self.send_participants_list(room_id)
-
+                        await self.consumer.channel_layer.group_send(
+                            'rooms_group',
+                            {
+                                'type': 'get_all_rooms',
+                            }
+                        )
                     else:
                         await self.consumer.send(text_data=json.dumps({
                             'type': 'info',
@@ -124,6 +129,12 @@ class RoomCommands:
                         {
                             'type': 'user_left',
                             'username': user.username
+                        }
+                    )
+                    await self.consumer.channel_layer.group_send(
+                        'rooms_group',
+                        {
+                            'type': 'get_all_rooms',
                         }
                     )
                 else:
